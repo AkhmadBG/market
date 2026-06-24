@@ -1,6 +1,7 @@
 package ru.yandex.practicum.market.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.*;
 
@@ -27,8 +28,9 @@ public class ItemInCart {
     @JoinColumn(name = "cart_id", nullable = false)
     private Cart cart;
 
+    @NotNull
     @Positive
     @Column(name = "count", nullable = false)
-    private int count;
+    private Integer count;
 
 }
