@@ -10,6 +10,7 @@ import java.math.BigDecimal;
 
 @Getter
 @Setter
+@EqualsAndHashCode(of = "itemId")
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
@@ -37,5 +38,8 @@ public class Item {
     @Positive
     @Column(name = "price", nullable = false, precision = 10, scale = 2)
     private BigDecimal price;
+
+    @Column(name = "count")
+    private Integer count;
 
 }

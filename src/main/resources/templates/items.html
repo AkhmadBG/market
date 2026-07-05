@@ -29,12 +29,12 @@
                     <input class="form-control me-2 mw-100" type="search" placeholder="Найти..." aria-label="Поиск" name="search" th:value="${search}" form="main"/>
                     <button class="btn btn-outline-success" type="submit" form="main">Найти</button>
                     <div class="form-floating w-25">
-                        <select class="form-select" id="sort" name="sort" onchange="document.getElementById('main').submit()" form="main">
-                            <option value="NO" th:selected="${sort=='NO'}">нет</option>
-                            <option value="ALPHA" th:selected="${sort=='ALPHA'}">по алфавиту</option>
-                            <option value="PRICE" th:selected="${sort=='PRICE'}">по цене</option>
+                        <select class="form-select" id="itemSort" name="itemSort" onchange="document.getElementById('main').submit()" form="main">
+                            <option value="NO" th:selected="${itemSort=='NO'}">нет</option>
+                            <option value="ALPHA" th:selected="${itemSort=='ALPHA'}">по алфавиту</option>
+                            <option value="PRICE" th:selected="${itemSort=='PRICE'}">по цене</option>
                         </select>
-                        <label for="sort">Сортировка</label>
+                        <label for="itemSort">Сортировка</label>
                     </div>
                     <div class="form-floating w-25">
                         <select class="form-select" id="pageSize" name="pageSize" onchange="document.getElementById('main').submit()" form="main">
@@ -52,8 +52,8 @@
         </div>
         <div class="row p-2" th:each="itemsRow : ${items}">
             <div class="col" th:each="item : ${itemsRow}">
-                <div class="card" th:if="${item.id() != -1}">
-                    <a th:href="${'/items/'+item.id()}">
+                <div class="card" th:if="${item.itemId() != -1}">
+                    <a th:href="${'/items/'+item.itemId()}">
                         <img th:src="${'/'+item.imgPath()}" class="card-img-top" alt="Нет изображения">
                     </a>
                     <div class="card-body">
@@ -64,9 +64,9 @@
                         <p class="card-text" th:text="${item.description()}"></p>
                         <form method="post" th:action="@{/items}">
                             <div class="hstack gap-3">
-                                <input type="hidden" name="id" th:value="${item.id()}">
+                                <input type="hidden" name="id" th:value="${item.itemId()}">
                                 <input type="hidden" name="search" th:value="${search}">
-                                <input type="hidden" name="sort" th:value="${sort}">
+                                <input type="hidden" name="itemSort" th:value="${itemSort}">
                                 <input type="hidden" name="pageSize" th:value="${paging.pageSize()}">
                                 <input type="hidden" name="pageNumber" th:value="${paging.pageNumber()}">
                                 <button type="submit" class="btn btn-outline-secondary" name="action" value="MINUS">-</button>
@@ -77,7 +77,7 @@
                         </form>
                     </div>
                 </div>
-                <div th:unless="${item.id() != -1}">&nbsp;</div>
+                <div th:unless="${item.itemId() != -1}">&nbsp;</div>
             </div>
         </div>
         <div class="row p-2">

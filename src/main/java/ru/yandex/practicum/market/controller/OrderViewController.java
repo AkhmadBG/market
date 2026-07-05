@@ -11,36 +11,36 @@ import java.util.List;
 
 @Controller
 @RequiredArgsConstructor
-@RequestMapping({"/orders", "/buy"})
 public class OrderViewController {
 
     private final OrderService orderService;
 
-    @GetMapping
+    //Эндпоинт получения страницы со списком заказов
+    //GET /orders
+    @GetMapping("/orders")
     public String getOrders(Model model) {
         List<OrderDto> orders= orderService.getOrders();
         model.addAttribute("orders", orders);
         return "orders";
     }
 
-    @GetMapping("/{itemId}")
-    public String getOrderById(@PathVariable Long itemId,
+    //Эндпоинт получения страницы заказа
+    //GET /orders/{id}?newOrder=[newOrder]
+    @GetMapping("/orders/{id}")
+    public String getOrderById(@PathVariable(name = "id") Long orderId,
                                @RequestParam(required = false, defaultValue = "false") boolean newOrder,
                                Model model) {
-        OrderDto order = orderService.getOrderById(itemId, newOrder);
+        OrderDto order = orderService.getOrderById(orderId, newOrder);
         model.addAttribute("order", order);
         return "order";
     }
 
-    @PostMapping
-    public String newOrder(Model model) {
+    //Эндпоинт совершения заказа
+    //POST /buy
+    @PostMapping("/buy")
+    public String newOrder() {
         Long newOrderId = orderService.newOrder();
         return "redirect:/orders/" + newOrderId + "?newOrder=true";
     }
 
 }
-
-
-//GET /orders
-//GET /orders/{id}?newOrder=[newOrder]
-//POST /buy

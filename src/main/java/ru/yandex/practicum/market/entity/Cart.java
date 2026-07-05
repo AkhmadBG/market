@@ -11,6 +11,7 @@ import java.util.Set;
 
 @Getter
 @Setter
+@EqualsAndHashCode(of = "cartId")
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor

@@ -4,6 +4,7 @@ CREATE TABLE IF NOT EXISTS items (
     description VARCHAR(255) NOT NULL,
     img_path VARCHAR(255),
     price NUMERIC(10, 2) NOT NULL CHECK (price > 0)
+    count INTEGER NOT NULL CHECK (count > 0),
 );
 
 CREATE TABLE IF NOT EXISTS carts (
@@ -18,8 +19,8 @@ CREATE TABLE IF NOT EXISTS orders (
 
 CREATE TABLE IF NOT EXISTS items_in_carts (
     item_in_cart_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    item_id INTEGER NOT NULL,
-    cart_id INTEGER NOT NULL,
+    item_id BIGINT NOT NULL UNIQUE(cart_id, item_id),
+    cart_id BIGINT NOT NULL,
     count INTEGER NOT NULL CHECK (count > 0),
     CONSTRAINT fk_items_in_carts_items FOREIGN KEY (item_id) REFERENCES items(item_id) ON DELETE CASCADE,
     CONSTRAINT fk_items_in_carts_carts FOREIGN KEY (cart_id) REFERENCES carts(cart_id) ON DELETE CASCADE
@@ -27,8 +28,9 @@ CREATE TABLE IF NOT EXISTS items_in_carts (
 
 CREATE TABLE IF NOT EXISTS items_in_orders (
     item_in_order_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    item_id INTEGER NOT NULL,
-    order_id INTEGER NOT NULL,
+    item_id BIGINT NOT NULL,
+    order_id BIGINT NOT NULL,
+    price NUMERIC(10, 2) NOT NULL,
     count INTEGER NOT NULL CHECK (count > 0),
     CONSTRAINT fk_items_in_orders_items FOREIGN KEY (item_id) REFERENCES items(item_id) ON DELETE CASCADE,
     CONSTRAINT fk_items_in_orders_orders FOREIGN KEY (order_id) REFERENCES orders(order_id) ON DELETE CASCADE

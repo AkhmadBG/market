@@ -1,7 +1,7 @@
 package ru.yandex.practicum.market.enums;
 
-public enum Action {
+public enum ItemSort {
 
-    MINUS, PLUS, DELETE;
+    NO, ALPHA, PRICE;
 
 }

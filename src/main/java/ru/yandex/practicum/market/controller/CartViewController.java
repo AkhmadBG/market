@@ -18,20 +18,25 @@ public class CartViewController {
 
     private final CartService cartService;
 
+    //Эндпоинт получения страницы со списком товаров в корзине
+    //GET /cart/items
     @GetMapping
     public String getItemsInCart(Model model) {
         CartDto cart = cartService.getItemsInCart();
-        model.addAttribute("cart", cart);
+        model.addAttribute("items", cart.itemsInCart());
+        model.addAttribute("total", cart.total());
         return "cart";
     }
 
+    //Эндпоинт уменьшения/увеличения количества товара в корзине со страницы корзины
+    //POST /cart/items?id=[id]&action=[action]
     @PostMapping
-    public String changeItemsQuantityInCart(@RequestParam Long itemId,
-                                            @RequestParam String action,
+    public String changeItemsQuantityInCart(@RequestParam(name = "id") Long itemId,
+                                            @RequestParam Action action,
                                             Model model) {
-        Action checkAction = Action.checkActionFromString(action);
-        CartDto cart = cartService.changeItemsQuantityInCart(itemId, checkAction);
-        model.addAttribute("cart", cart);
+        CartDto cart = cartService.changeItemsQuantityInCart(itemId, action);
+        model.addAttribute("items", cart.itemsInCart());
+        model.addAttribute("total", cart.total());
         return "cart";
     }
 

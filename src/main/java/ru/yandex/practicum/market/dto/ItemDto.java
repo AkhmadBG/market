@@ -12,7 +12,9 @@ public record ItemDto(
 
         String imgPath,
 
-        BigDecimal price
+        BigDecimal price,
+
+        Integer count
 
 ) {
 }
