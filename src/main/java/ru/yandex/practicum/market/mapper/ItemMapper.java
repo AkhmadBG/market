@@ -1,6 +1,7 @@
 package ru.yandex.practicum.market.mapper;
 
 import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.market.dto.ItemDto;
 import ru.yandex.practicum.market.dto.ItemInCartDto;
@@ -13,10 +14,11 @@ public interface ItemMapper {
 
     ItemDto toItemDto(Item item);
 
-//    ItemInCartDto toItemInCartDto(Item item);
+//    ItemInCartDto toItemInCartDto(ItemInCart item);
 
-    ItemInCartDto toItemInCartDto(ItemInCart item);
-
-    ItemInOrder toItemInOrder(ItemInCart itemIncart);
+    @Mapping(target = "item", source = "item")
+    @Mapping(target = "price", source = "item.price")
+    @Mapping(target = "count", source = "item.count")
+    ItemInOrder toItemInOrder(Item item);
 
 }

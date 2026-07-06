@@ -3,18 +3,21 @@ package ru.yandex.practicum.market.service.impl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ru.yandex.practicum.market.dto.CartDto;
 import ru.yandex.practicum.market.dto.OrderDto;
-import ru.yandex.practicum.market.entity.Cart;
+import ru.yandex.practicum.market.entity.Item;
 import ru.yandex.practicum.market.entity.ItemInOrder;
 import ru.yandex.practicum.market.entity.Order;
 import ru.yandex.practicum.market.exception.OrderNotFoundException;
 import ru.yandex.practicum.market.mapper.ItemMapper;
 import ru.yandex.practicum.market.mapper.OrderMapper;
 import ru.yandex.practicum.market.repository.ItemInOrderRepository;
+import ru.yandex.practicum.market.repository.ItemRepository;
 import ru.yandex.practicum.market.repository.OrderRepository;
 import ru.yandex.practicum.market.service.CartService;
 import ru.yandex.practicum.market.service.OrderService;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -24,6 +27,7 @@ import java.util.stream.Collectors;
 public class OrderServiceImpl implements OrderService {
 
     private final OrderRepository orderRepository;
+    private final ItemRepository itemRepository;
     private final ItemInOrderRepository itemInOrderRepository;
     private final CartService cartService;
     private final OrderMapper orderMapper;
@@ -47,21 +51,24 @@ public class OrderServiceImpl implements OrderService {
     @Transactional
     @Override
     public Long newOrder() {
-        Cart cart = cartService.getCart();
-        Set<ItemInOrder> itemsInOrder = cart.getItemsInCart()
+        Set<Item> items = itemRepository.findByCountGreaterThan(0);
+        Set<ItemInOrder> itemsInOrder = items
                 .stream()
                 .map(itemMapper::toItemInOrder)
                 .collect(Collectors.toSet());
+        BigDecimal total = items.stream()
+                .map(Item::getPrice)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
         Order order = Order.builder()
                 .itemsInOrder(itemsInOrder)
-                .totalSum(cart.getTotal())
+                .totalSum(total)
                 .build();
         Order newOrder = orderRepository.save(order);
         for(ItemInOrder itemInOrder : itemsInOrder) {
             itemInOrder.setOrder(newOrder);
-            itemInOrderRepository.save(itemInOrder);
+//            itemInOrderRepository.save(itemInOrder);
         }
-        cartService.deleteCartById(cart.getCartId());
+        cartService.deleteCart();
         return newOrder.getOrderId();
     }
 

@@ -7,7 +7,7 @@ public record OrderDto(
 
         Long orderId,
 
-        Set<ItemInOrderDto> itemsInOrder,
+        Set<ItemInOrderDto> items,
 
         BigDecimal totalSum
 

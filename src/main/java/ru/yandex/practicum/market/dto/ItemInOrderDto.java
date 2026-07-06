@@ -1,5 +1,7 @@
 package ru.yandex.practicum.market.dto;
 
+import java.math.BigDecimal;
+
 public record ItemInOrderDto(
 
         Long itemInOrderDto,
@@ -7,6 +9,8 @@ public record ItemInOrderDto(
         ItemDto itemDto,
 
         OrderDto orderDto,
+
+        BigDecimal price,
 
         Integer count
 

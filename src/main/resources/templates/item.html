@@ -32,7 +32,7 @@
                             <span class="badge text-bg-success justify-content-end" th:text="${item.price()}+' руб.'"></span>
                         </h5>
                         <p class="card-text" th:text="${item.description()}"></p>
-                        <form th:action="@{${'/items/'+item.id()}}" method="post">
+                        <form th:action="@{${'/items/'+item.itemId()}}" method="post">
                             <div class="hstack gap-3">
                                 <button type="submit" class="btn btn-outline-secondary" name="action" value="MINUS">-</button>
                                 <span th:text="${item.count()}"></span>

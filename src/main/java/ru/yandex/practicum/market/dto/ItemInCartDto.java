@@ -6,7 +6,7 @@ public record ItemInCartDto(
 
         ItemDto itemDto,
 
-        CartDto cartDto,
+//        CartDto cartDto,
 
         Integer count
 

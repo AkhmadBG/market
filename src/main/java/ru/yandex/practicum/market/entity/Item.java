@@ -39,6 +39,7 @@ public class Item {
     @Column(name = "price", nullable = false, precision = 10, scale = 2)
     private BigDecimal price;
 
+    @NotNull
     @Column(name = "count")
     private Integer count;
 

@@ -9,9 +9,9 @@ services:
       POSTGRES_USER: market
       POSTGRES_PASSWORD: market
     volumes:
-      - blog:/var/lib/postgresql/data
+      - market:/var/lib/postgresql/data
     ports:
       - "5431:5432"
 
 volumes:
-  blog:
+  market:

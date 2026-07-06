@@ -73,7 +73,7 @@ public class ItemViewController {
     public String changeItemQuantityInItem(@PathVariable(name = "id") Long itemId,
                                            @RequestParam Action action,
                                            Model model) {
-        ItemInCartDto item = itemService.changeItemQuantityInItem(itemId, action);
+        ItemDto item = itemService.changeItemQuantityInItem(itemId, action);
         model.addAttribute("item", item);
         return "item";
     }

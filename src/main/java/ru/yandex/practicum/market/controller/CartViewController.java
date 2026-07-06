@@ -8,8 +8,12 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import ru.yandex.practicum.market.dto.CartDto;
+import ru.yandex.practicum.market.dto.ItemDto;
 import ru.yandex.practicum.market.enums.Action;
 import ru.yandex.practicum.market.service.CartService;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Controller
 @RequiredArgsConstructor
@@ -23,7 +27,8 @@ public class CartViewController {
     @GetMapping
     public String getItemsInCart(Model model) {
         CartDto cart = cartService.getItemsInCart();
-        model.addAttribute("items", cart.itemsInCart());
+        List<ItemDto> items = cart.items().stream().toList();
+        model.addAttribute("items", cart.items());
         model.addAttribute("total", cart.total());
         return "cart";
     }
@@ -35,7 +40,7 @@ public class CartViewController {
                                             @RequestParam Action action,
                                             Model model) {
         CartDto cart = cartService.changeItemsQuantityInCart(itemId, action);
-        model.addAttribute("items", cart.itemsInCart());
+        model.addAttribute("items", cart.items());
         model.addAttribute("total", cart.total());
         return "cart";
     }
