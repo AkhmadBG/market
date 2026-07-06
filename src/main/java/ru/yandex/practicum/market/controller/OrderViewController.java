@@ -15,17 +15,13 @@ public class OrderViewController {
 
     private final OrderService orderService;
 
-    //Эндпоинт получения страницы со списком заказов
-    //GET /orders
     @GetMapping("/orders")
     public String getOrders(Model model) {
-        List<OrderDto> orders= orderService.getOrders();
+        List<OrderDto> orders = orderService.getOrders();
         model.addAttribute("orders", orders);
         return "orders";
     }
 
-    //Эндпоинт получения страницы заказа
-    //GET /orders/{id}?newOrder=[newOrder]
     @GetMapping("/orders/{id}")
     public String getOrderById(@PathVariable(name = "id") Long orderId,
                                @RequestParam(required = false, defaultValue = "false") boolean newOrder,
@@ -35,8 +31,6 @@ public class OrderViewController {
         return "order";
     }
 
-    //Эндпоинт совершения заказа
-    //POST /buy
     @PostMapping("/buy")
     public String newOrder() {
         Long newOrderId = orderService.newOrder();

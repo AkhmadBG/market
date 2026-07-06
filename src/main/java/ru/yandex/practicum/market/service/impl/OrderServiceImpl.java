@@ -3,7 +3,6 @@ package ru.yandex.practicum.market.service.impl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.yandex.practicum.market.dto.CartDto;
 import ru.yandex.practicum.market.dto.OrderDto;
 import ru.yandex.practicum.market.entity.Item;
 import ru.yandex.practicum.market.entity.ItemInOrder;
@@ -18,6 +17,7 @@ import ru.yandex.practicum.market.service.CartService;
 import ru.yandex.practicum.market.service.OrderService;
 
 import java.math.BigDecimal;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -52,21 +52,22 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public Long newOrder() {
         Set<Item> items = itemRepository.findByCountGreaterThan(0);
-        Set<ItemInOrder> itemsInOrder = items
-                .stream()
-                .map(itemMapper::toItemInOrder)
-                .collect(Collectors.toSet());
+        Set<ItemInOrder> itemsInOrder = new HashSet<>();
+        for (Item item : items) {
+            ItemInOrder itemInOrder = itemMapper.toItemInOrder(item);
+            ItemInOrder saveItemInOrder = itemInOrderRepository.save(itemInOrder);
+            itemsInOrder.add(saveItemInOrder);
+        }
         BigDecimal total = items.stream()
-                .map(Item::getPrice)
+                .map(item -> item.getPrice().multiply(BigDecimal.valueOf(item.getCount())))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
         Order order = Order.builder()
                 .itemsInOrder(itemsInOrder)
                 .totalSum(total)
                 .build();
         Order newOrder = orderRepository.save(order);
-        for(ItemInOrder itemInOrder : itemsInOrder) {
+        for (ItemInOrder itemInOrder : itemsInOrder) {
             itemInOrder.setOrder(newOrder);
-//            itemInOrderRepository.save(itemInOrder);
         }
         cartService.deleteCart();
         return newOrder.getOrderId();

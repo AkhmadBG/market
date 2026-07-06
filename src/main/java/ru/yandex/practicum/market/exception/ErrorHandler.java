@@ -1,0 +1,41 @@
+package ru.yandex.practicum.market.exception;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
+
+@RestControllerAdvice
+public class ErrorHandler {
+
+    @ExceptionHandler(ItemNotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ApiError handleItemNotFoundException(final ItemNotFoundException e) {
+        return new ApiError(
+                HttpStatus.NOT_FOUND,
+                "Товар не найден",
+                e.getMessage()
+        );
+    }
+
+    @ExceptionHandler(OrderNotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ApiError handleOrderNotFoundException(final OrderNotFoundException e) {
+        return new ApiError(
+                HttpStatus.NOT_FOUND,
+                "Заказ не найден",
+                e.getMessage()
+        );
+    }
+
+    @ExceptionHandler(Exception.class)
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    public ApiError handleException(final Exception e) {
+        return new ApiError(
+                HttpStatus.INTERNAL_SERVER_ERROR,
+                "Произошла ошибка",
+                e.getMessage()
+        );
+    }
+
+}

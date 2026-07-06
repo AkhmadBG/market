@@ -5,17 +5,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.yandex.practicum.market.dto.CartDto;
 import ru.yandex.practicum.market.entity.Item;
-import ru.yandex.practicum.market.entity.ItemInCart;
 import ru.yandex.practicum.market.enums.Action;
 import ru.yandex.practicum.market.exception.ItemNotFoundException;
 import ru.yandex.practicum.market.mapper.CartMapper;
-import ru.yandex.practicum.market.repository.ItemInCartRepository;
 import ru.yandex.practicum.market.repository.ItemRepository;
 import ru.yandex.practicum.market.service.CartService;
 
 import java.math.BigDecimal;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 @Service
@@ -43,7 +39,6 @@ public class CartServiceImpl implements CartService {
             }
             case MINUS -> {
                 if (item.getCount() == 1 || item.getCount() == 0) {
-//                    itemRepository.deleteById(itemId);
                     item.setCount(0);
                     itemRepository.save(item);
                 } else {

@@ -6,16 +6,12 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.yandex.practicum.market.dto.ItemDto;
-import ru.yandex.practicum.market.dto.ItemInCartDto;
 import ru.yandex.practicum.market.dto.ItemsPageDto;
 import ru.yandex.practicum.market.dto.PagingDto;
 import ru.yandex.practicum.market.entity.Item;
-import ru.yandex.practicum.market.entity.ItemInCart;
 import ru.yandex.practicum.market.enums.Action;
 import ru.yandex.practicum.market.exception.ItemNotFoundException;
-import ru.yandex.practicum.market.mapper.ItemInCartMapper;
 import ru.yandex.practicum.market.mapper.ItemMapper;
-import ru.yandex.practicum.market.repository.ItemInCartRepository;
 import ru.yandex.practicum.market.repository.ItemRepository;
 import ru.yandex.practicum.market.service.ItemService;
 
@@ -28,8 +24,6 @@ public class ItemServiceImpl implements ItemService {
 
     private final ItemRepository itemRepository;
     private final ItemMapper itemMapper;
-    private final ItemInCartMapper itemInCartMapper;
-    private final ItemInCartRepository itemInCartRepository;
 
     @Override
     public ItemsPageDto getItems(String search, Pageable pageable) {
@@ -75,7 +69,6 @@ public class ItemServiceImpl implements ItemService {
             case PLUS -> item.setCount(item.getCount() + 1);
             case MINUS -> {
                 if (item.getCount() == 0 || item.getCount() == 1) {
-//                    itemInCartRepository.deleteById(itemId);
                     item.setCount(0);
                 } else {
                     item.setCount(item.getCount() - 1);

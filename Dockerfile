@@ -1,4 +1,3 @@
-FROM ubuntu:latest
-LABEL authors="akhma"
-
-ENTRYPOINT ["top", "-b"]
+FROM amazoncorretto:21
+COPY target/*.jar market.jar
+ENTRYPOINT ["java", "-jar", "/market.jar"]

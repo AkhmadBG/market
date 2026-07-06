@@ -13,7 +13,6 @@ import ru.yandex.practicum.market.enums.Action;
 import ru.yandex.practicum.market.service.CartService;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Controller
 @RequiredArgsConstructor
@@ -22,8 +21,6 @@ public class CartViewController {
 
     private final CartService cartService;
 
-    //Эндпоинт получения страницы со списком товаров в корзине
-    //GET /cart/items
     @GetMapping
     public String getItemsInCart(Model model) {
         CartDto cart = cartService.getItemsInCart();
@@ -33,8 +30,6 @@ public class CartViewController {
         return "cart";
     }
 
-    //Эндпоинт уменьшения/увеличения количества товара в корзине со страницы корзины
-    //POST /cart/items?id=[id]&action=[action]
     @PostMapping
     public String changeItemsQuantityInCart(@RequestParam(name = "id") Long itemId,
                                             @RequestParam Action action,
@@ -46,7 +41,3 @@ public class CartViewController {
     }
 
 }
-
-
-//GET /cart/items
-//POST /cart/items?id=[id]&action=[action]
