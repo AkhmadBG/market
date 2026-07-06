@@ -26,9 +26,9 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class OrderServiceImpl implements OrderService {
 
+    private final ItemInOrderRepository itemInOrderRepository;
     private final OrderRepository orderRepository;
     private final ItemRepository itemRepository;
-    private final ItemInOrderRepository itemInOrderRepository;
     private final CartService cartService;
     private final OrderMapper orderMapper;
     private final ItemMapper itemMapper;
