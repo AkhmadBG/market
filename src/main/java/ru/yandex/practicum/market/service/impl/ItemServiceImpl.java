@@ -8,31 +8,55 @@ import org.springframework.transaction.annotation.Transactional;
 import ru.yandex.practicum.market.dto.ItemDto;
 import ru.yandex.practicum.market.dto.ItemsPageDto;
 import ru.yandex.practicum.market.dto.PagingDto;
+import ru.yandex.practicum.market.entity.Cart;
 import ru.yandex.practicum.market.entity.Item;
+import ru.yandex.practicum.market.entity.ItemInCart;
 import ru.yandex.practicum.market.enums.Action;
 import ru.yandex.practicum.market.exception.ItemNotFoundException;
 import ru.yandex.practicum.market.mapper.ItemMapper;
+import ru.yandex.practicum.market.repository.CartRepository;
+import ru.yandex.practicum.market.repository.ItemInCartRepository;
 import ru.yandex.practicum.market.repository.ItemRepository;
 import ru.yandex.practicum.market.service.ItemService;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class ItemServiceImpl implements ItemService {
 
     private final ItemRepository itemRepository;
+    private final CartRepository cartRepository;
+    private final ItemInCartRepository itemInCartRepository;
     private final ItemMapper itemMapper;
 
     @Override
     public ItemsPageDto getItems(String search, Pageable pageable) {
         Page<Item> itemsPage = itemRepository.findByTitleContainingIgnoreCaseOrDescriptionContainingIgnoreCase(search, search, pageable);
-        List<ItemDto> itemsInCart = itemsPage.getContent().stream()
-                .map(itemMapper::toItemDto)
+        Cart cart = cartRepository.findAll().getFirst();
+        Map<Long, Integer> counts = cart.getItemsInCart().stream()
+                .collect(Collectors.toMap(
+                        item -> item.getItem().getItemId(),
+                        ItemInCart::getCount
+                ));
+
+        List<ItemDto> itemsDto = itemsPage.getContent().stream()
+                .map(item -> new ItemDto(
+                        item.getItemId(),
+                        item.getTitle(),
+                        item.getDescription(),
+                        item.getImgPath(),
+                        item.getPrice(),
+                        counts.getOrDefault(item.getItemId(), 0)
+                ))
                 .toList();
+
         return new ItemsPageDto(
-                splitByThree(itemsInCart),
+                splitByThree(itemsDto),
                 new PagingDto(
                         itemsPage.getNumber() + 1,
                         itemsPage.getSize(),
@@ -51,7 +75,12 @@ public class ItemServiceImpl implements ItemService {
     public ItemDto getItemById(Long itemId) {
         Item item = itemRepository.findById(itemId)
                 .orElseThrow(() -> new ItemNotFoundException("Товар с id " + itemId + " не найден"));
-        return itemMapper.toItemDto(item);
+        Optional<ItemInCart> itemInCartOpt = itemInCartRepository.findByItem_ItemId(itemId);
+        ItemDto itemDto = itemMapper.toItemDto(item);
+        if (itemInCartOpt.isPresent()) {
+            itemDto.count().
+        }
+        return
     }
 
     @Transactional
