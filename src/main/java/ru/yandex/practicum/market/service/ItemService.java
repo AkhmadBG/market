@@ -3,6 +3,7 @@ package ru.yandex.practicum.market.service;
 import org.springframework.data.domain.Pageable;
 import ru.yandex.practicum.market.dto.ItemDto;
 import ru.yandex.practicum.market.dto.ItemsPageDto;
+import ru.yandex.practicum.market.entity.Item;
 import ru.yandex.practicum.market.enums.Action;
 
 public interface ItemService {
@@ -11,7 +12,7 @@ public interface ItemService {
 
     void changeItemQuantityInItems(Long itemId, Action action);
 
-    ItemDto getItemById(Long itemId);
+    ItemDto getItemDtoById(Long itemId);
 
     ItemDto changeItemQuantityInItem(Long itemId, Action action);
 

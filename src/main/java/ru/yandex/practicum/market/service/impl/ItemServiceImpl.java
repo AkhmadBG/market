@@ -14,15 +14,14 @@ import ru.yandex.practicum.market.entity.ItemInCart;
 import ru.yandex.practicum.market.enums.Action;
 import ru.yandex.practicum.market.exception.ItemNotFoundException;
 import ru.yandex.practicum.market.mapper.ItemMapper;
-import ru.yandex.practicum.market.repository.CartRepository;
-import ru.yandex.practicum.market.repository.ItemInCartRepository;
 import ru.yandex.practicum.market.repository.ItemRepository;
+import ru.yandex.practicum.market.service.CartService;
+import ru.yandex.practicum.market.service.ItemInCartService;
 import ru.yandex.practicum.market.service.ItemService;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -30,14 +29,14 @@ import java.util.stream.Collectors;
 public class ItemServiceImpl implements ItemService {
 
     private final ItemRepository itemRepository;
-    private final CartRepository cartRepository;
-    private final ItemInCartRepository itemInCartRepository;
+    private final ItemInCartService itemInCartService;
+    private final CartService cartService;
     private final ItemMapper itemMapper;
 
     @Override
     public ItemsPageDto getItems(String search, Pageable pageable) {
         Page<Item> itemsPage = itemRepository.findByTitleContainingIgnoreCaseOrDescriptionContainingIgnoreCase(search, search, pageable);
-        Cart cart = cartRepository.findAll().getFirst();
+        Cart cart = cartService.getActiveCart();
         Map<Long, Integer> counts = cart.getItemsInCart().stream()
                 .collect(Collectors.toMap(
                         item -> item.getItem().getItemId(),
@@ -72,35 +71,35 @@ public class ItemServiceImpl implements ItemService {
     }
 
     @Override
-    public ItemDto getItemById(Long itemId) {
+    public ItemDto getItemDtoById(Long itemId) {
         Item item = itemRepository.findById(itemId)
                 .orElseThrow(() -> new ItemNotFoundException("Товар с id " + itemId + " не найден"));
-        Optional<ItemInCart> itemInCartOpt = itemInCartRepository.findByItem_ItemId(itemId);
-        ItemDto itemDto = itemMapper.toItemDto(item);
-        if (itemInCartOpt.isPresent()) {
-            itemDto.count().
-        }
-        return
+        Integer itemInCartCount = itemInCartService.getItemInCartCount(itemId);
+        return itemMapper.toItemDto(item, itemInCartCount);
     }
 
     @Transactional
     @Override
     public ItemDto changeItemQuantityInItem(Long itemId, Action action) {
         Item item = changeItemQuantity(itemId, action);
-        return itemMapper.toItemDto(item);
+        Integer itemInCartCount = itemInCartService.getItemInCartCount(itemId);
+        return itemMapper.toItemDto(item, itemInCartCount);
     }
 
     @Transactional
     protected Item changeItemQuantity(Long itemId, Action action) {
         Item item = itemRepository.findById(itemId)
                 .orElseThrow(() -> new ItemNotFoundException("Товар с id " + itemId + " не найден"));
+        ItemInCart itemInCart = itemInCartService.getItemInCartByItemId(itemId);
         switch (action) {
-            case PLUS -> item.setCount(item.getCount() + 1);
+            case PLUS -> {
+                itemInCart.setCount(itemInCart.getCount() + 1);
+            }
             case MINUS -> {
-                if (item.getCount() == 0 || item.getCount() == 1) {
-                    item.setCount(0);
+                if (itemInCart.getCount() == 0 || itemInCart.getCount() == 1) {
+                    itemInCart.setCount(0);
                 } else {
-                    item.setCount(item.getCount() - 1);
+                    itemInCart.setCount(itemInCart.getCount() - 1);
                 }
             }
             default -> throw new IllegalStateException("Значения " + action + " нет в enum Action");

@@ -53,7 +53,7 @@ public class ItemViewController {
 
     @GetMapping("/items/{id}")
     public String getItemById(@PathVariable(name = "id") Long itemId, Model model) {
-        ItemDto item = itemService.getItemById(itemId);
+        ItemDto item = itemService.getItemDtoById(itemId);
         model.addAttribute("item", item);
         return "item";
     }

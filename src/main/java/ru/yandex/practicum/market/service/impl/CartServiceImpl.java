@@ -4,12 +4,15 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.yandex.practicum.market.dto.CartDto;
-import ru.yandex.practicum.market.entity.Item;
+import ru.yandex.practicum.market.entity.Cart;
+import ru.yandex.practicum.market.entity.ItemInCart;
 import ru.yandex.practicum.market.enums.Action;
-import ru.yandex.practicum.market.exception.ItemNotFoundException;
+import ru.yandex.practicum.market.enums.CartStatus;
+import ru.yandex.practicum.market.exception.CartNotFoundException;
 import ru.yandex.practicum.market.mapper.CartMapper;
-import ru.yandex.practicum.market.repository.ItemRepository;
+import ru.yandex.practicum.market.repository.CartRepository;
 import ru.yandex.practicum.market.service.CartService;
+import ru.yandex.practicum.market.service.ItemInCartService;
 
 import java.math.BigDecimal;
 import java.util.Set;
@@ -18,7 +21,8 @@ import java.util.Set;
 @RequiredArgsConstructor
 public class CartServiceImpl implements CartService {
 
-    private final ItemRepository itemRepository;
+    private final ItemInCartService itemInCartService;
+    private final CartRepository cartRepository;
     private final CartMapper cartMapper;
 
     @Transactional
@@ -30,26 +34,17 @@ public class CartServiceImpl implements CartService {
     @Transactional
     @Override
     public CartDto changeItemsQuantityInCart(Long itemId, Action action) {
-        Item item = itemRepository.findById(itemId)
-                .orElseThrow(() -> new ItemNotFoundException("Товар с id " + itemId + " не найден в корзине"));
+        ItemInCart itemInCart = itemInCartService.getItemInCartByItemId(itemId);
         switch (action) {
-            case PLUS -> {
-                item.setCount(item.getCount() + 1);
-                itemRepository.save(item);
-            }
+            case PLUS -> itemInCart.setCount(itemInCart.getCount() + 1);
             case MINUS -> {
-                if (item.getCount() == 1 || item.getCount() == 0) {
-                    item.setCount(0);
-                    itemRepository.save(item);
+                if (itemInCart.getCount() == 1 || itemInCart.getCount() == 0) {
+                    itemInCart.setCount(0);
                 } else {
-                    item.setCount(item.getCount() - 1);
-                    itemRepository.save(item);
+                    itemInCart.setCount(itemInCart.getCount() - 1);
                 }
             }
-            case DELETE -> {
-                item.setCount(0);
-                itemRepository.save(item);
-            }
+            case DELETE -> itemInCart.setCount(0);
             default -> throw new IllegalStateException("Значения " + action + " нет в enum Action");
         }
         return getCartDto();
@@ -58,19 +53,25 @@ public class CartServiceImpl implements CartService {
     @Transactional
     @Override
     public CartDto getCartDto() {
-        Set<Item> items = itemRepository.findByCountGreaterThan(0);
-        BigDecimal total = items.stream()
+        Set<ItemInCart> itemsInCart = itemInCartService.getItemsICartByCart();
+        BigDecimal total = itemsInCart.stream()
                 .map(item -> item.getPrice()
                         .multiply(BigDecimal.valueOf(item.getCount())))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
-        return cartMapper.toCartDto(items, total);
+        return cartMapper.toCartDto(itemsInCart, total);
     }
 
     @Transactional
     @Override
-    public void deleteCart() {
-        itemRepository.findByCountGreaterThan(0).forEach(
-                item -> item.setCount(0));
+    public void clearCart() {
+        Cart cart = getActiveCart();
+        cart.setCartStatus(CartStatus.CLOSED);
+    }
+
+    @Override
+    public Cart getActiveCart() {
+        return cartRepository.findByCartStatus(CartStatus.ACTIVE)
+                .orElseThrow(() -> new CartNotFoundException("Активная корзина не найдена"));
     }
 
 }

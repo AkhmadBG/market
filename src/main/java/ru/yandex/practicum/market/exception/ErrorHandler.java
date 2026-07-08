@@ -28,6 +28,26 @@ public class ErrorHandler {
         );
     }
 
+@ExceptionHandler(CartNotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ApiError handleCartNotFoundException(final CartNotFoundException e) {
+        return new ApiError(
+                HttpStatus.NOT_FOUND,
+                "Корзина не найден",
+                e.getMessage()
+        );
+    }
+
+    @ExceptionHandler(ItemInCartNotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ApiError handleItemInCartNotFoundException(final ItemInCartNotFoundException e) {
+        return new ApiError(
+                HttpStatus.NOT_FOUND,
+                "Товар не найден в корзине",
+                e.getMessage()
+        );
+    }
+
     @ExceptionHandler(Exception.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public ApiError handleException(final Exception e) {

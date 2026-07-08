@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.*;
+import ru.yandex.practicum.market.enums.CartStatus;
 
 import java.math.BigDecimal;
 import java.util.HashSet;
@@ -32,5 +33,9 @@ public class Cart {
     @Positive
     @Column(name = "total", nullable = false, precision = 10, scale = 2)
     private BigDecimal total;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "cart_status", nullable = false)
+    private CartStatus cartStatus;
 
 }
