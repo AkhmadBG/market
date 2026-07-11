@@ -3,6 +3,7 @@ package ru.yandex.practicum.market.entity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.PositiveOrZero;
 import lombok.*;
 
 import java.math.BigDecimal;
@@ -36,7 +37,7 @@ public class ItemInCart {
     private BigDecimal price;
 
     @NotNull
-    @Positive
+    @PositiveOrZero
     @Column(name = "count", nullable = false)
     private Integer count;
 

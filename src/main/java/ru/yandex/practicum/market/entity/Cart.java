@@ -2,7 +2,7 @@ package ru.yandex.practicum.market.entity;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.PositiveOrZero;
 import lombok.*;
 import ru.yandex.practicum.market.enums.CartStatus;
 
@@ -30,7 +30,7 @@ public class Cart {
     private Set<ItemInCart> itemsInCart = new HashSet<>();
 
     @NotNull
-    @Positive
+    @PositiveOrZero
     @Column(name = "total", nullable = false, precision = 10, scale = 2)
     private BigDecimal total;
 

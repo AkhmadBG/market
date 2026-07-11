@@ -16,4 +16,6 @@ public interface ItemService {
 
     ItemDto changeItemQuantityInItem(Long itemId, Action action);
 
+    Item getItemById(Long itemId);
+
 }

@@ -14,3 +14,13 @@ spring:
     hibernate:
       ddl-auto: update
     show-sql: true
+
+#logging:
+#  level:
+#    root: DEBUG
+#    org:
+#      zalando:
+#        logbook: DEBUG
+#    org.springframework: DEBUG
+#    org.hibernate: INFO
+#    ru.yandex.practicum.market: DEBUG

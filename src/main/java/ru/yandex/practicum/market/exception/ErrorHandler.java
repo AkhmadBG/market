@@ -5,6 +5,8 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import java.util.Arrays;
+
 @RestControllerAdvice
 public class ErrorHandler {
 
@@ -28,7 +30,7 @@ public class ErrorHandler {
         );
     }
 
-@ExceptionHandler(CartNotFoundException.class)
+    @ExceptionHandler(CartNotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ApiError handleCartNotFoundException(final CartNotFoundException e) {
         return new ApiError(
@@ -54,7 +56,7 @@ public class ErrorHandler {
         return new ApiError(
                 HttpStatus.INTERNAL_SERVER_ERROR,
                 "Произошла ошибка",
-                e.getMessage()
+                Arrays.toString(e.getStackTrace())
         );
     }
 

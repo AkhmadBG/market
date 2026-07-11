@@ -2,7 +2,7 @@ package ru.yandex.practicum.market.entity;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.PositiveOrZero;
 import lombok.*;
 
 import java.math.BigDecimal;
@@ -29,7 +29,7 @@ public class Order {
     private Set<ItemInOrder> itemsInOrder = new HashSet<>();
 
     @NotNull
-    @Positive
+    @PositiveOrZero
     @Column(name = "total_sum", nullable = false, precision = 10, scale = 2)
     private BigDecimal totalSum;
 

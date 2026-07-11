@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS items_in_carts (
     item_id BIGINT NOT NULL,
     cart_id BIGINT NOT NULL,
     price NUMERIC(10, 2) NOT NULL,
-    count INTEGER NOT NULL CHECK (count > 0),
+    count INTEGER NOT NULL CHECK (count >= 0),
     CONSTRAINT fk_items_in_carts_items FOREIGN KEY (item_id) REFERENCES items (item_id),
     CONSTRAINT fk_items_in_carts_carts FOREIGN KEY (cart_id) REFERENCES carts (cart_id) ON DELETE CASCADE,
     CONSTRAINT uq_cart_item UNIQUE (cart_id, item_id)
@@ -33,7 +33,7 @@ CREATE TABLE IF NOT EXISTS items_in_orders (
     item_id BIGINT NOT NULL,
     order_id BIGINT,
     price NUMERIC(10, 2) NOT NULL,
-    count INTEGER NOT NULL CHECK (count > 0),
+    count INTEGER NOT NULL CHECK (count >= 0),
     CONSTRAINT fk_items_in_orders_items FOREIGN KEY (item_id) REFERENCES items (item_id),
     CONSTRAINT fk_items_in_orders_orders FOREIGN KEY (order_id) REFERENCES orders (order_id) ON DELETE CASCADE,
     CONSTRAINT uq_order_item UNIQUE (order_id, item_id)

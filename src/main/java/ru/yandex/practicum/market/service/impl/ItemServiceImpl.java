@@ -86,26 +86,15 @@ public class ItemServiceImpl implements ItemService {
         return itemMapper.toItemDto(item, itemInCartCount);
     }
 
+    @Override
+    public Item getItemById(Long itemId) {
+        return itemRepository.findById(itemId)
+                .orElseThrow(() -> new ItemNotFoundException("Товар с id " + itemId + " не найден"));
+    }
+
     @Transactional
     protected Item changeItemQuantity(Long itemId, Action action) {
-        Item item = itemRepository.findById(itemId)
-                .orElseThrow(() -> new ItemNotFoundException("Товар с id " + itemId + " не найден"));
-        ItemInCart itemInCart = itemInCartService.getItemInCartByItemId(itemId);
-        switch (action) {
-            case PLUS -> {
-                itemInCart.setCount(itemInCart.getCount() + 1);
-            }
-            case MINUS -> {
-                if (itemInCart.getCount() == 0 || itemInCart.getCount() == 1) {
-                    itemInCart.setCount(0);
-                } else {
-                    itemInCart.setCount(itemInCart.getCount() - 1);
-                }
-            }
-            default -> throw new IllegalStateException("Значения " + action + " нет в enum Action");
-        }
-
-        return itemRepository.save(item);
+        return itemInCartService.changeItemsQuantityInCart(itemId, action);
     }
 
     private List<List<ItemDto>> splitByThree(List<ItemDto> items) {

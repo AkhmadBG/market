@@ -51,7 +51,7 @@ public class OrderServiceImpl implements OrderService {
     @Transactional
     @Override
     public Long newOrder() {
-        Set<ItemInCart> itemsInCart = itemInCartService.getItemsICartByCart();
+        Set<ItemInCart> itemsInCart = itemInCartService.getItemsInCartByCart();
         Set<ItemInOrder> itemsInOrder = new HashSet<>();
         for (ItemInCart itemInCart : itemsInCart) {
             ItemInOrder itemInOrder = itemMapper.toItemInOrder(itemInCart);
