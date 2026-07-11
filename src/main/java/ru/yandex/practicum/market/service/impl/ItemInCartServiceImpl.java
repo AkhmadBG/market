@@ -38,10 +38,10 @@ public class ItemInCartServiceImpl implements ItemInCartService {
         }
     }
 
-    @Override
-    public Set<ItemInCart> getItemsInCartByCart() {
-        return itemInCartRepository.findAllByCart_CartStatus(CartStatus.ACTIVE);
-    }
+//    @Override
+//    public Set<ItemInCart> getItemsInCartByCart() {
+//        return itemInCartRepository.findAllByCart_CartStatus(CartStatus.ACTIVE);
+//    }
 
     @Override
     public Item changeItemsQuantityInCart(Long itemId, Action action) {
@@ -64,6 +64,19 @@ public class ItemInCartServiceImpl implements ItemInCartService {
             case DELETE -> deleteItemFromCart(itemInCart);
             default -> throw new IllegalStateException("Значения " + action + " нет в enum Action");
         }
+
+        Cart cart = cartRepository.findByCartStatus(CartStatus.ACTIVE)
+                .orElseThrow(() -> new CartNotFoundException("Активная корзина не найдена"));
+
+        BigDecimal total = cart.getItemsInCart().stream()
+                .map(
+                        i -> i.getItem().getPrice()
+                        .multiply(BigDecimal.valueOf(i.getCount()))
+                )
+                .reduce(BigDecimal.ZERO,BigDecimal::add);
+
+        cart.setTotal(total);
+
         return item;
     }
 

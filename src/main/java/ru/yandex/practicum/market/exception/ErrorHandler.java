@@ -50,6 +50,16 @@ public class ErrorHandler {
         );
     }
 
+    @ExceptionHandler(CartIsEmptyException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ApiError handleCartIsEmptyException(final CartIsEmptyException e) {
+        return new ApiError(
+                HttpStatus.NOT_FOUND,
+                "Корзина пуста",
+                e.getMessage()
+        );
+    }
+
     @ExceptionHandler(Exception.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public ApiError handleException(final Exception e) {

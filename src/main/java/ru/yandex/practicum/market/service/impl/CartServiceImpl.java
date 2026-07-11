@@ -32,29 +32,33 @@ public class CartServiceImpl implements CartService {
     @Transactional
     @Override
     public CartDto getItemsInCart() {
-        return getCartDto();
+        Cart cart = cartRepository.findByCartStatus(CartStatus.ACTIVE)
+                .orElseThrow(() -> new CartNotFoundException("Активная корзина не найдена"));
+        return cartMapper.toCartDto(cart);
     }
 
     @Transactional
     @Override
     public CartDto changeItemsQuantityInCart(Long itemId, Action action) {
         itemInCartService.changeItemsQuantityInCart(itemId, action);
-        return getCartDto();
+        Cart cart = cartRepository.findByCartStatus(CartStatus.ACTIVE)
+                .orElseThrow(() -> new CartNotFoundException("Активная корзина не найдена"));
+        return cartMapper.toCartDto(cart);
     }
 
-    @Transactional
-    @Override
-    public CartDto getCartDto() {
-        Set<ItemInCart> itemsInCart = itemInCartService.getItemsInCartByCart();
-        BigDecimal total = itemsInCart.stream()
-                .map(item -> item.getPrice()
-                        .multiply(BigDecimal.valueOf(item.getCount())))
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-        Set<ItemDto> itemsDto = itemsInCart.stream()
-                .map(itemMapper::toItemDtoFromItemInCart)
-                .collect(Collectors.toSet());
-        return cartMapper.toCartDto(itemsDto, total);
-    }
+//    @Transactional
+//    @Override
+//    public CartDto getCartDto() {
+//        Set<ItemInCart> itemsInCart = itemInCartService.getItemsInCartByCart();
+//        BigDecimal total = itemsInCart.stream()
+//                .map(item -> item.getPrice()
+//                        .multiply(BigDecimal.valueOf(item.getCount())))
+//                .reduce(BigDecimal.ZERO, BigDecimal::add);
+//        Set<ItemDto> itemsDto = itemsInCart.stream()
+//                .map(itemMapper::toItemDtoFromItemInCart)
+//                .collect(Collectors.toSet());
+//        return cartMapper.toCartDto(itemsDto, total);
+//    }
 
     @Transactional
     @Override

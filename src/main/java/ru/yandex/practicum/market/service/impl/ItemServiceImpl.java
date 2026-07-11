@@ -67,7 +67,7 @@ public class ItemServiceImpl implements ItemService {
     @Transactional
     @Override
     public void changeItemQuantityInItems(Long itemId, Action action) {
-        changeItemQuantity(itemId, action);
+        itemInCartService.changeItemsQuantityInCart(itemId, action);
     }
 
     @Override
@@ -81,21 +81,16 @@ public class ItemServiceImpl implements ItemService {
     @Transactional
     @Override
     public ItemDto changeItemQuantityInItem(Long itemId, Action action) {
-        Item item = changeItemQuantity(itemId, action);
+        Item item = itemInCartService.changeItemsQuantityInCart(itemId, action);
         Integer itemInCartCount = itemInCartService.getItemInCartCount(itemId);
         return itemMapper.toItemDto(item, itemInCartCount);
     }
 
-    @Override
-    public Item getItemById(Long itemId) {
-        return itemRepository.findById(itemId)
-                .orElseThrow(() -> new ItemNotFoundException("Товар с id " + itemId + " не найден"));
-    }
-
-    @Transactional
-    protected Item changeItemQuantity(Long itemId, Action action) {
-        return itemInCartService.changeItemsQuantityInCart(itemId, action);
-    }
+//    @Override
+//    public Item getItemById(Long itemId) {
+//        return itemRepository.findById(itemId)
+//                .orElseThrow(() -> new ItemNotFoundException("Товар с id " + itemId + " не найден"));
+//    }
 
     private List<List<ItemDto>> splitByThree(List<ItemDto> items) {
         List<List<ItemDto>> result = new ArrayList<>();

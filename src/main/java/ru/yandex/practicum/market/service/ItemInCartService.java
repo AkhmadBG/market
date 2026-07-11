@@ -10,7 +10,7 @@ public interface ItemInCartService {
 
     Integer getItemInCartCount(Long itemId);
 
-    Set<ItemInCart> getItemsInCartByCart();
+//    Set<ItemInCart> getItemsInCartByCart();
 
     Item changeItemsQuantityInCart(Long itemId, Action action);
 

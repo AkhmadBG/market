@@ -10,7 +10,7 @@ public interface CartService {
 
     CartDto changeItemsQuantityInCart(Long itemId, Action action);
 
-    CartDto getCartDto();
+//    CartDto getCartDto();
 
     void clearCart();
 

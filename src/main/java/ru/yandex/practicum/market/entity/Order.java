@@ -33,4 +33,9 @@ public class Order {
     @Column(name = "total_sum", nullable = false, precision = 10, scale = 2)
     private BigDecimal totalSum;
 
+    public void addItemInOrder(ItemInOrder itemInOrder) {
+        this.itemsInOrder.add(itemInOrder);
+        itemInOrder.setOrder(this);
+    }
+
 }
