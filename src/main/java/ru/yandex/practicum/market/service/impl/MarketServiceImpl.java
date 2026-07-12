@@ -69,7 +69,6 @@ public class MarketServiceImpl implements MarketService {
     public ItemDto getItemDtoById(Long itemId) {
         Item item = itemService.getItemById(itemId);
         Integer itemInCartCount = getItemInCartCount(itemId);
-//        BigDecimal total = item.getPrice().multiply(BigDecimal.valueOf(itemInCartCount));
         return itemMapper.toItemDto(item, itemInCartCount);
     }
 
@@ -89,7 +88,6 @@ public class MarketServiceImpl implements MarketService {
         changeItemsQuantityInCart(itemId, action);
         Integer itemInCartCount = getItemInCartCount(itemId);
         Item item = itemService.getItemById(itemId);
-//        BigDecimal total = item.getPrice().multiply(BigDecimal.valueOf(itemInCartCount));
         return itemMapper.toItemDto(item, itemInCartCount);
     }
 
@@ -116,7 +114,6 @@ public class MarketServiceImpl implements MarketService {
             case PLUS -> {
                 itemInCart.setCount(itemInCart.getCount() + 1);
                 itemInCartService.save(itemInCart);
-//                itemInCart.setPrice(itemInCart.getItem().getPrice().multiply(BigDecimal.valueOf(itemInCart.getCount())));
             }
             case MINUS -> {
                 if (itemInCart.getCount() == 1 || itemInCart.getCount() == 0) {
@@ -124,7 +121,6 @@ public class MarketServiceImpl implements MarketService {
                 } else {
                     itemInCart.setCount(itemInCart.getCount() - 1);
                     itemInCartService.save(itemInCart);
-//                    itemInCart.setPrice(itemInCart.getItem().getPrice().multiply(BigDecimal.valueOf(itemInCart.getCount())));
                 }
             }
             case DELETE -> cart.getItemsInCart().remove(itemInCart);
