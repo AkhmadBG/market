@@ -53,7 +53,7 @@ public class ItemViewController {
                                             @RequestParam(required = false, defaultValue = "5") @Min(1) @Max(100) int pageSize,
                                             @RequestParam Action action,
                                             RedirectAttributes redirectAttributes) {
-        marketService.changeItemsQuantityInCart(itemId, action);
+        marketService.changeItemQuantityInCart(itemId, action);
         redirectAttributes.addAttribute("search", search);
         redirectAttributes.addAttribute("itemSort", itemSort);
         redirectAttributes.addAttribute("pageNumber", pageNumber);

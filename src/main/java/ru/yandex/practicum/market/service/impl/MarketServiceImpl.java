@@ -85,7 +85,7 @@ public class MarketServiceImpl implements MarketService {
     @Transactional
     @Override
     public ItemDto changeItemQuantityInItem(Long itemId, Action action) {
-        changeItemsQuantityInCart(itemId, action);
+        changeItemQuantityInCart(itemId, action);
         Integer itemInCartCount = getItemInCartCount(itemId);
         Item item = itemService.getItemById(itemId);
         return itemMapper.toItemDto(item, itemInCartCount);
@@ -93,7 +93,7 @@ public class MarketServiceImpl implements MarketService {
 
     @Transactional
     @Override
-    public void changeItemsQuantityInCart(Long itemId, Action action) {
+    public void changeItemQuantityInCart(Long itemId, Action action) {
         Cart cart = cartService.getActiveCart();
 
         Item item = itemService.getItemById(itemId);
@@ -108,24 +108,22 @@ public class MarketServiceImpl implements MarketService {
                         .price(item.getPrice())
                         .build());
 
-        itemInCartService.save(itemInCart);
-
         switch (action) {
             case PLUS -> {
                 itemInCart.setCount(itemInCart.getCount() + 1);
-                itemInCartService.save(itemInCart);
             }
             case MINUS -> {
                 if (itemInCart.getCount() == 1 || itemInCart.getCount() == 0) {
                     cart.getItemsInCart().remove(itemInCart);
                 } else {
                     itemInCart.setCount(itemInCart.getCount() - 1);
-                    itemInCartService.save(itemInCart);
                 }
             }
             case DELETE -> cart.getItemsInCart().remove(itemInCart);
             default -> throw new IllegalStateException("Значения " + action + " нет в enum Action");
         }
+
+        itemInCartService.save(itemInCart);
 
         BigDecimal total = cart.getItemsInCart().stream()
                 .map(
@@ -139,7 +137,7 @@ public class MarketServiceImpl implements MarketService {
 
     @Transactional
     @Override
-    public Long newOrder() {
+    public Long createOrder() {
         Cart cart = cartService.getActiveCart();
 
         if (cart.getItemsInCart().isEmpty()) {
@@ -158,7 +156,7 @@ public class MarketServiceImpl implements MarketService {
 
         Order newOrder = orderService.save(order);
 
-        cartService.clearCart();
+        cartService.closeCart();
         return newOrder.getOrderId();
     }
 

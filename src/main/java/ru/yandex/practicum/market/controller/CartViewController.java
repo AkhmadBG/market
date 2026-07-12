@@ -31,7 +31,7 @@ public class CartViewController {
     @PostMapping
     public String changeItemsQuantityInCart(@RequestParam(name = "id") Long itemId,
                                             @RequestParam Action action) {
-        marketService.changeItemsQuantityInCart(itemId, action);
+        marketService.changeItemQuantityInCart(itemId, action);
         return "redirect:/cart/items";
     }
 

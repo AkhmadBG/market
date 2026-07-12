@@ -35,8 +35,8 @@ public class OrderViewController {
     }
 
     @PostMapping("/buy")
-    public String newOrder() {
-        Long newOrderId = marketService.newOrder();
+    public String createOrder() {
+        Long newOrderId = marketService.createOrder();
         return "redirect:/orders/" + newOrderId + "?newOrder=true";
     }
 

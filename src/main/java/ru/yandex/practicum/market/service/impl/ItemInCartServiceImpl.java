@@ -17,7 +17,7 @@ public class ItemInCartServiceImpl implements ItemInCartService {
 
     @Override
     public Optional<ItemInCart> findByCart_CartStatusAndItem_ItemId(CartStatus cartStatus, Long itemId) {
-        return itemInCartRepository.findByCart_CartStatusAndItem_ItemId(CartStatus.ACTIVE, itemId);
+        return itemInCartRepository.findByCart_CartStatusAndItem_ItemId(cartStatus, itemId);
     }
 
     @Override

@@ -29,7 +29,7 @@ public class CartServiceImpl implements CartService {
 
     @Transactional
     @Override
-    public void clearCart() {
+    public void closeCart() {
         Cart cart = getActiveCart();
         cart.setCartStatus(CartStatus.CLOSED);
     }

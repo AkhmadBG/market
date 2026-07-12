@@ -7,7 +7,7 @@ public interface CartService {
 
     CartDto getItemsInCart();
 
-    void clearCart();
+    void closeCart();
 
     Cart getActiveCart();
 

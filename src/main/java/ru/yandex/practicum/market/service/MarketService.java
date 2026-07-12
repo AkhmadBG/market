@@ -15,8 +15,8 @@ public interface MarketService {
 
     ItemDto changeItemQuantityInItem(Long itemId, Action action);
 
-    void changeItemsQuantityInCart(Long itemId, Action action);
+    void changeItemQuantityInCart(Long itemId, Action action);
 
-    Long newOrder();
+    Long createOrder();
 
 }
