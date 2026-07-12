@@ -7,14 +7,8 @@ import java.util.Optional;
 
 public interface ItemInCartService {
 
-//    Integer getItemInCartCount(Long itemId);
-
     Optional<ItemInCart> findByCart_CartStatusAndItem_ItemId(CartStatus cartStatus, Long itemId);
 
     void save(ItemInCart itemInCart);
-
-//    Set<ItemInCart> getItemsInCartByCart();
-
-//    void changeItemsQuantityInCart(Long itemId, Action action);
 
 }

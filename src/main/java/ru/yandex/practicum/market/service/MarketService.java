@@ -7,16 +7,16 @@ import ru.yandex.practicum.market.enums.Action;
 
 public interface MarketService {
 
-    void changeItemsQuantityInCart(Long itemId, Action action);
+    ItemsPageDto getItems(String search, Pageable pageable);
+
+    ItemDto getItemDtoById(Long itemId);
 
     Integer getItemInCartCount(Long itemId);
 
-    Long newOrder();
-
-    ItemsPageDto getItems(String search, Pageable pageable);
-
     ItemDto changeItemQuantityInItem(Long itemId, Action action);
 
-    ItemDto getItemDtoById(Long itemId);
+    void changeItemsQuantityInCart(Long itemId, Action action);
+
+    Long newOrder();
 
 }

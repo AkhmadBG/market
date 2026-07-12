@@ -4,7 +4,6 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import ru.yandex.practicum.market.dto.ItemDto;
 import ru.yandex.practicum.market.dto.ItemInOrderDto;
-import ru.yandex.practicum.market.entity.Cart;
 import ru.yandex.practicum.market.entity.Item;
 import ru.yandex.practicum.market.entity.ItemInCart;
 import ru.yandex.practicum.market.entity.ItemInOrder;
@@ -15,8 +14,8 @@ import java.math.BigDecimal;
 public interface ItemMapper {
 
     @Mapping(target = "count", source = "itemInCartCount")
-    @Mapping(target = "price", source = "total")
-    ItemDto toItemDto(Item item, Integer itemInCartCount, BigDecimal total);
+//    @Mapping(target = "price", source = "total")
+    ItemDto toItemDto(Item item, Integer itemInCartCount);
 
     @Mapping(target = "item", source = "item")
     @Mapping(target = "price", source = "itemInCart.price")
@@ -25,12 +24,6 @@ public interface ItemMapper {
 
     @Mapping(target = "itemDto", source = "item")
     ItemInOrderDto toItemInOrderDto(ItemInOrder itemInorder);
-
-    @Mapping(target = "item", source = "item")
-    @Mapping(target = "cart", source = "cart")
-    @Mapping(target = "price", source = "item.price")
-    @Mapping(target = "count", constant = "0")
-    ItemInCart toItemInCart(Item item, Cart cart);
 
     @Mapping(target = "itemId", source = "itemInCart.item.itemId")
     @Mapping(target = "title", source = "itemInCart.item.title")

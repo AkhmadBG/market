@@ -4,11 +4,11 @@ import java.math.BigDecimal;
 
 public record ItemInOrderDto(
 
-        Long itemInOrderDto,
+        Long itemInOrderId,
 
         ItemDto itemDto,
 
-        OrderDto orderDto,
+//        OrderDto orderDto,
 
         BigDecimal price,
 

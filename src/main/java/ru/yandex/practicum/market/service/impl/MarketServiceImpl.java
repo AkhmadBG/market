@@ -12,10 +12,7 @@ import ru.yandex.practicum.market.entity.*;
 import ru.yandex.practicum.market.enums.Action;
 import ru.yandex.practicum.market.enums.CartStatus;
 import ru.yandex.practicum.market.exception.CartIsEmptyException;
-import ru.yandex.practicum.market.exception.ItemNotFoundException;
-import ru.yandex.practicum.market.mapper.CartMapper;
 import ru.yandex.practicum.market.mapper.ItemMapper;
-import ru.yandex.practicum.market.mapper.OrderMapper;
 import ru.yandex.practicum.market.service.*;
 
 import java.math.BigDecimal;
@@ -35,24 +32,6 @@ public class MarketServiceImpl implements MarketService {
     private final ItemInCartService itemInCartService;
     private final ItemInOrderService itemInOrderService;
     private final ItemMapper itemMapper;
-
-    @Override
-    public ItemDto getItemDtoById(Long itemId) {
-        Item item = itemService.getItemById(itemId);
-        Integer itemInCartCount = getItemInCartCount(itemId);
-        BigDecimal total = item.getPrice().multiply(BigDecimal.valueOf(itemInCartCount));
-        return itemMapper.toItemDto(item, itemInCartCount, total);
-    }
-
-    @Transactional
-    @Override
-    public ItemDto changeItemQuantityInItem(Long itemId, Action action) {
-        changeItemsQuantityInCart(itemId, action);
-        Integer itemInCartCount = getItemInCartCount(itemId);
-        Item item = itemService.getItemById(itemId);
-        BigDecimal total = item.getPrice().multiply(BigDecimal.valueOf(itemInCartCount));
-        return itemMapper.toItemDto(item, itemInCartCount, total);
-    }
 
     @Transactional
     @Override
@@ -86,6 +65,82 @@ public class MarketServiceImpl implements MarketService {
                 ));
     }
 
+    @Override
+    public ItemDto getItemDtoById(Long itemId) {
+        Item item = itemService.getItemById(itemId);
+        Integer itemInCartCount = getItemInCartCount(itemId);
+//        BigDecimal total = item.getPrice().multiply(BigDecimal.valueOf(itemInCartCount));
+        return itemMapper.toItemDto(item, itemInCartCount);
+    }
+
+    @Override
+    public Integer getItemInCartCount(Long itemId) {
+        Optional<ItemInCart> itemInCartOpt = itemInCartService.findByCart_CartStatusAndItem_ItemId(CartStatus.ACTIVE, itemId);
+        if (itemInCartOpt.isPresent()) {
+            return itemInCartOpt.get().getCount();
+        } else {
+            return 0;
+        }
+    }
+
+    @Transactional
+    @Override
+    public ItemDto changeItemQuantityInItem(Long itemId, Action action) {
+        changeItemsQuantityInCart(itemId, action);
+        Integer itemInCartCount = getItemInCartCount(itemId);
+        Item item = itemService.getItemById(itemId);
+//        BigDecimal total = item.getPrice().multiply(BigDecimal.valueOf(itemInCartCount));
+        return itemMapper.toItemDto(item, itemInCartCount);
+    }
+
+    @Transactional
+    @Override
+    public void changeItemsQuantityInCart(Long itemId, Action action) {
+        Cart cart = cartService.getActiveCart();
+
+        Item item = itemService.getItemById(itemId);
+
+        ItemInCart itemInCart = cart.getItemsInCart().stream()
+                .filter(i -> i.getItem().getItemId().equals(itemId))
+                .findFirst()
+                .orElseGet(() -> ItemInCart.builder()
+                        .cart(cart)
+                        .item(item)
+                        .count(0)
+                        .price(item.getPrice())
+                        .build());
+
+        itemInCartService.save(itemInCart);
+
+        switch (action) {
+            case PLUS -> {
+                itemInCart.setCount(itemInCart.getCount() + 1);
+                itemInCartService.save(itemInCart);
+//                itemInCart.setPrice(itemInCart.getItem().getPrice().multiply(BigDecimal.valueOf(itemInCart.getCount())));
+            }
+            case MINUS -> {
+                if (itemInCart.getCount() == 1 || itemInCart.getCount() == 0) {
+                    cart.getItemsInCart().remove(itemInCart);
+                } else {
+                    itemInCart.setCount(itemInCart.getCount() - 1);
+                    itemInCartService.save(itemInCart);
+//                    itemInCart.setPrice(itemInCart.getItem().getPrice().multiply(BigDecimal.valueOf(itemInCart.getCount())));
+                }
+            }
+            case DELETE -> cart.getItemsInCart().remove(itemInCart);
+            default -> throw new IllegalStateException("Значения " + action + " нет в enum Action");
+        }
+
+        BigDecimal total = cart.getItemsInCart().stream()
+                .map(
+                        i -> i.getItem().getPrice()
+                                .multiply(BigDecimal.valueOf(i.getCount()))
+                )
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        cart.setTotal(total);
+    }
+
     @Transactional
     @Override
     public Long newOrder() {
@@ -109,64 +164,6 @@ public class MarketServiceImpl implements MarketService {
 
         cartService.clearCart();
         return newOrder.getOrderId();
-    }
-
-    @Transactional
-    @Override
-    public void changeItemsQuantityInCart(Long itemId, Action action) {
-        Cart cart = cartService.getActiveCart();
-
-        Item item = itemService.getItemById(itemId);
-
-        ItemInCart itemInCart = cart.getItemsInCart().stream()
-                .filter(i -> i.getItem().getItemId().equals(itemId))
-                .findFirst()
-                .orElseGet(() -> ItemInCart.builder()
-                        .cart(cart)
-                        .item(item)
-                        .count(0)
-                        .price(BigDecimal.ZERO)
-                        .build());
-
-        itemInCartService.save(itemInCart);
-
-        switch (action) {
-            case PLUS -> {
-                itemInCart.setCount(itemInCart.getCount() + 1);
-                itemInCartService.save(itemInCart);
-                itemInCart.setPrice(itemInCart.getItem().getPrice().multiply(BigDecimal.valueOf(itemInCart.getCount())));
-            }
-            case MINUS -> {
-                if (itemInCart.getCount() == 1 || itemInCart.getCount() == 0) {
-                    cart.getItemsInCart().remove(itemInCart);
-                } else {
-                    itemInCart.setCount(itemInCart.getCount() - 1);
-                    itemInCartService.save(itemInCart);
-                    itemInCart.setPrice(itemInCart.getItem().getPrice().multiply(BigDecimal.valueOf(itemInCart.getCount())));
-                }
-            }
-            case DELETE -> cart.getItemsInCart().remove(itemInCart);
-            default -> throw new IllegalStateException("Значения " + action + " нет в enum Action");
-        }
-
-        BigDecimal total = cart.getItemsInCart().stream()
-                .map(
-                        i -> i.getItem().getPrice()
-                                .multiply(BigDecimal.valueOf(i.getCount()))
-                )
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        cart.setTotal(total);
-    }
-
-    @Override
-    public Integer getItemInCartCount(Long itemId) {
-        Optional<ItemInCart> itemInCartOpt = itemInCartService.findByCart_CartStatusAndItem_ItemId(CartStatus.ACTIVE, itemId);
-        if (itemInCartOpt.isPresent()) {
-            return itemInCartOpt.get().getCount();
-        } else {
-            return 0;
-        }
     }
 
     private List<List<ItemDto>> splitByThree(List<ItemDto> items) {

@@ -5,16 +5,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.yandex.practicum.market.dto.CartDto;
 import ru.yandex.practicum.market.entity.Cart;
-import ru.yandex.practicum.market.enums.Action;
 import ru.yandex.practicum.market.enums.CartStatus;
 import ru.yandex.practicum.market.mapper.CartMapper;
 import ru.yandex.practicum.market.repository.CartRepository;
 import ru.yandex.practicum.market.service.CartService;
-import ru.yandex.practicum.market.service.MarketService;
 
 import java.math.BigDecimal;
 import java.util.HashSet;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor

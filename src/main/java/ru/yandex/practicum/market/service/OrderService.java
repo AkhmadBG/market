@@ -13,6 +13,4 @@ public interface OrderService {
 
     Order save(Order order);
 
-//    Long newOrder();
-
 }
