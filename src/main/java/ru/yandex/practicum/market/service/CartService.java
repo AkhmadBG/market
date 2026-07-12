@@ -8,7 +8,7 @@ public interface CartService {
 
     CartDto getItemsInCart();
 
-    CartDto changeItemsQuantityInCart(Long itemId, Action action);
+//    void changeItemsQuantityInCart(Long itemId, Action action);
 
 //    CartDto getCartDto();
 

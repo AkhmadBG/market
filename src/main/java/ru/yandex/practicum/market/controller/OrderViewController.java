@@ -5,6 +5,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.market.dto.OrderDto;
+import ru.yandex.practicum.market.service.MarketService;
 import ru.yandex.practicum.market.service.OrderService;
 
 import java.util.List;
@@ -14,6 +15,7 @@ import java.util.List;
 public class OrderViewController {
 
     private final OrderService orderService;
+    private final MarketService marketService;
 
     @GetMapping("/orders")
     public String getOrders(Model model) {
@@ -26,14 +28,15 @@ public class OrderViewController {
     public String getOrderById(@PathVariable(name = "id") Long orderId,
                                @RequestParam(required = false, defaultValue = "false") boolean newOrder,
                                Model model) {
-        OrderDto order = orderService.getOrderById(orderId, newOrder);
+        OrderDto order = orderService.getOrderById(orderId);
         model.addAttribute("order", order);
+        model.addAttribute("newOrder", newOrder);
         return "order";
     }
 
     @PostMapping("/buy")
     public String newOrder() {
-        Long newOrderId = orderService.newOrder();
+        Long newOrderId = marketService.newOrder();
         return "redirect:/orders/" + newOrderId + "?newOrder=true";
     }
 

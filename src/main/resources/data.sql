@@ -1,5 +1,5 @@
-INSERT INTO carts (total, cart_status)
-VALUES (0, 'ACTIVE');
+-- INSERT INTO carts (total, cart_status)
+-- VALUES (0, 'ACTIVE');
 
 INSERT INTO items (title, description, img_path, price)
 VALUES ('test1', 'test1 description', '/images/cup_coffee.png', 100);

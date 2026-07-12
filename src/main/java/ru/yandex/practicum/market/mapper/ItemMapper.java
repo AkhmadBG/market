@@ -9,11 +9,14 @@ import ru.yandex.practicum.market.entity.Item;
 import ru.yandex.practicum.market.entity.ItemInCart;
 import ru.yandex.practicum.market.entity.ItemInOrder;
 
+import java.math.BigDecimal;
+
 @Mapper(componentModel = "spring")
 public interface ItemMapper {
 
     @Mapping(target = "count", source = "itemInCartCount")
-    ItemDto toItemDto(Item item, Integer itemInCartCount);
+    @Mapping(target = "price", source = "total")
+    ItemDto toItemDto(Item item, Integer itemInCartCount, BigDecimal total);
 
     @Mapping(target = "item", source = "item")
     @Mapping(target = "price", source = "itemInCart.price")

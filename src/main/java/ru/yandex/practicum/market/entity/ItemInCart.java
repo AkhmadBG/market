@@ -32,7 +32,7 @@ public class ItemInCart {
     private Cart cart;
 
     @NotNull
-    @Positive
+    @PositiveOrZero
     @Column(name = "price", nullable = false, precision = 10, scale = 2)
     private BigDecimal price;
 

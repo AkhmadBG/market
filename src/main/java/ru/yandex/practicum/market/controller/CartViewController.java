@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import ru.yandex.practicum.market.dto.CartDto;
 import ru.yandex.practicum.market.enums.Action;
 import ru.yandex.practicum.market.service.CartService;
+import ru.yandex.practicum.market.service.MarketService;
 
 @Controller
 @RequiredArgsConstructor
@@ -17,6 +18,7 @@ import ru.yandex.practicum.market.service.CartService;
 public class CartViewController {
 
     private final CartService cartService;
+    private final MarketService marketService;
 
     @GetMapping
     public String getItemsInCart(Model model) {
@@ -28,12 +30,9 @@ public class CartViewController {
 
     @PostMapping
     public String changeItemsQuantityInCart(@RequestParam(name = "id") Long itemId,
-                                            @RequestParam Action action,
-                                            Model model) {
-        CartDto cart = cartService.changeItemsQuantityInCart(itemId, action);
-        model.addAttribute("items", cart.items());
-        model.addAttribute("total", cart.total());
-        return "cart";
+                                            @RequestParam Action action) {
+        marketService.changeItemsQuantityInCart(itemId, action);
+        return "redirect:/cart/items";
     }
 
 }
