@@ -3,7 +3,8 @@ CREATE TABLE IF NOT EXISTS items (
     title VARCHAR(255) NOT NULL,
     description VARCHAR(255) NOT NULL,
     img_path VARCHAR(255),
-    price NUMERIC(10, 2) NOT NULL CHECK (price >= 0)
+    price NUMERIC(10, 2) NOT NULL CHECK (price >= 0),
+    CONSTRAINT uq_items_title UNIQUE (title)
 );
 
 CREATE TABLE IF NOT EXISTS carts (

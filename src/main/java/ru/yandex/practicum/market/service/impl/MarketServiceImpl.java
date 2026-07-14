@@ -30,7 +30,6 @@ public class MarketServiceImpl implements MarketService {
     private final CartService cartService;
     private final OrderService orderService;
     private final ItemInCartService itemInCartService;
-    private final ItemInOrderService itemInOrderService;
     private final ItemMapper itemMapper;
 
     @Transactional
@@ -98,41 +97,54 @@ public class MarketServiceImpl implements MarketService {
 
         Item item = itemService.getItemById(itemId);
 
-        ItemInCart itemInCart = cart.getItemsInCart().stream()
+        Optional<ItemInCart> itemInCartOpt = cart.getItemsInCart().stream()
                 .filter(i -> i.getItem().getItemId().equals(itemId))
-                .findFirst()
-                .orElseGet(() -> ItemInCart.builder()
-                        .cart(cart)
-                        .item(item)
-                        .count(0)
-                        .price(item.getPrice())
-                        .build());
+                .findFirst();
 
-        switch (action) {
-            case PLUS -> {
-                itemInCart.setCount(itemInCart.getCount() + 1);
-            }
-            case MINUS -> {
-                if (itemInCart.getCount() == 1 || itemInCart.getCount() == 0) {
-                    cart.getItemsInCart().remove(itemInCart);
-                } else {
-                    itemInCart.setCount(itemInCart.getCount() - 1);
+        if (itemInCartOpt.isEmpty()) {
+            switch (action) {
+                case PLUS -> {
+                    ItemInCart itemInCart = ItemInCart.builder()
+                            .cart(cart)
+                            .item(item)
+                            .count(1)
+                            .price(item.getPrice())
+                            .build();
+                    cart.getItemsInCart().add(itemInCart);
+                    itemInCartService.save(itemInCart);
                 }
+                case MINUS, DELETE -> {
+                }
+                default -> throw new IllegalStateException("Значения " + action + " нет в enum Action");
             }
-            case DELETE -> cart.getItemsInCart().remove(itemInCart);
-            default -> throw new IllegalStateException("Значения " + action + " нет в enum Action");
+        } else {
+            ItemInCart itemInCart = itemInCartOpt.get();
+            switch (action) {
+                case PLUS -> {
+                    itemInCart.setCount(itemInCart.getCount() + 1);
+                    itemInCartService.save(itemInCart);
+                }
+                case MINUS -> {
+                    if (itemInCart.getCount() == 1) {
+                        cart.getItemsInCart().remove(itemInCart);
+                    } else {
+                        itemInCart.setCount(itemInCart.getCount() - 1);
+                        itemInCartService.save(itemInCart);
+                    }
+                }
+                case DELETE -> cart.getItemsInCart().remove(itemInCart);
+                default -> throw new IllegalStateException("Значения " + action + " нет в enum Action");
+            }
+
+            BigDecimal total = cart.getItemsInCart().stream()
+                    .map(
+                            i -> i.getItem().getPrice()
+                                    .multiply(BigDecimal.valueOf(i.getCount()))
+                    )
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+            cart.setTotal(total);
         }
-
-        itemInCartService.save(itemInCart);
-
-        BigDecimal total = cart.getItemsInCart().stream()
-                .map(
-                        i -> i.getItem().getPrice()
-                                .multiply(BigDecimal.valueOf(i.getCount()))
-                )
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        cart.setTotal(total);
     }
 
     @Transactional
@@ -148,8 +160,7 @@ public class MarketServiceImpl implements MarketService {
 
         for (ItemInCart itemInCart : cart.getItemsInCart()) {
             ItemInOrder itemInOrder = itemMapper.toItemInOrder(itemInCart);
-            ItemInOrder saveItemInOrder = itemInOrderService.save(itemInOrder);
-            order.addItemInOrder(saveItemInOrder);
+            order.addItemInOrder(itemInOrder);
         }
 
         order.setTotalSum(cart.getTotal());

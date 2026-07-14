@@ -8,8 +8,6 @@ public record ItemInOrderDto(
 
         ItemDto itemDto,
 
-//        OrderDto orderDto,
-
         BigDecimal price,
 
         Integer count

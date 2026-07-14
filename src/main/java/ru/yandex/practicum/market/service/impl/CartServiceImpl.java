@@ -20,7 +20,7 @@ public class CartServiceImpl implements CartService {
     private final CartRepository cartRepository;
     private final CartMapper cartMapper;
 
-    @Transactional(readOnly = true)
+    @Transactional
     @Override
     public CartDto getItemsInCart() {
         Cart cart = getActiveCart();

@@ -235,7 +235,6 @@ class MarketServiceImplTest {
 
         when(cartService.getActiveCart()).thenReturn(cart);
         when(itemMapper.toItemInOrder(itemInCart)).thenReturn(itemInOrder);
-        when(itemInOrderService.save(itemInOrder)).thenReturn(itemInOrder);
         when(orderService.save(any(Order.class))).thenReturn(savedOrder);
 
         Long result = marketService.createOrder();

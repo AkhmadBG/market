@@ -1,26 +1,24 @@
 spring:
   application:
     name: market
-  datasource:
-    url: jdbc:postgresql://localhost:5431/market
-    username: market
-    password: market
-    driver-class-name: org.postgresql.Driver
-  sql:
-    init:
-      mode: always
+
   jpa:
-    defer-datasource-initialization: true
     hibernate:
       ddl-auto: none
     show-sql: true
 
-#logging:
-#  level:
-#    root: DEBUG
-#    org:
-#      zalando:
-#        logbook: DEBUG
-#    org.springframework: DEBUG
-#    org.hibernate: INFO
-#    ru.yandex.practicum.market: DEBUG
+  liquibase:
+    enabled: true
+    change-log: classpath:db/changelog/db.changelog-master.yaml
+
+logging:
+  level:
+    root: INFO
+    org:
+      zalando:
+        logbook: INFO
+    org.springframework: INFO
+    org.hibernate: INFO
+    ru.yandex.practicum.market: INFO
+    org.springframework.boot.autoconfigure.liquibase: INFO
+    liquibase: INFO

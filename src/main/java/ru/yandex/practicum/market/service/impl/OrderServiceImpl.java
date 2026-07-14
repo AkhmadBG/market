@@ -20,7 +20,7 @@ public class OrderServiceImpl implements OrderService {
     private final OrderRepository orderRepository;
     private final OrderMapper orderMapper;
 
-    @Transactional
+    @Transactional(readOnly = true)
     @Override
     public List<OrderDto> getOrders() {
         List<Order> orders = orderRepository.findAll();
@@ -29,7 +29,7 @@ public class OrderServiceImpl implements OrderService {
                 .collect(Collectors.toList());
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     @Override
     public OrderDto getOrderById(Long orderId) {
         Order order = orderRepository.findById(orderId)
