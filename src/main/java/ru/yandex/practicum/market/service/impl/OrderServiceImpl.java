@@ -1,0 +1,45 @@
+package ru.yandex.practicum.market.service.impl;
+
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import ru.yandex.practicum.market.dto.OrderDto;
+import ru.yandex.practicum.market.entity.Order;
+import ru.yandex.practicum.market.exception.OrderNotFoundException;
+import ru.yandex.practicum.market.mapper.OrderMapper;
+import ru.yandex.practicum.market.repository.OrderRepository;
+import ru.yandex.practicum.market.service.OrderService;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
+@Service
+@RequiredArgsConstructor
+public class OrderServiceImpl implements OrderService {
+
+    private final OrderRepository orderRepository;
+    private final OrderMapper orderMapper;
+
+    @Transactional(readOnly = true)
+    @Override
+    public List<OrderDto> getOrders() {
+        List<Order> orders = orderRepository.findAll();
+        return orders.stream()
+                .map(orderMapper::toOrderDto)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    @Override
+    public OrderDto getOrderById(Long orderId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new OrderNotFoundException("Заказ с id = " + orderId + " не найден"));
+        return orderMapper.toOrderDto(order);
+    }
+
+    @Override
+    public Order save(Order order) {
+        return orderRepository.save(order);
+    }
+
+}
