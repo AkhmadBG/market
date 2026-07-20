@@ -1,14 +1,14 @@
 package ru.yandex.practicum.market.entity;
 
-import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
 import lombok.*;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.relational.core.mapping.Column;
+import org.springframework.data.relational.core.mapping.Table;
 import ru.yandex.practicum.market.enums.CartStatus;
 
 import java.math.BigDecimal;
-import java.util.HashSet;
-import java.util.Set;
 
 @Getter
 @Setter
@@ -16,26 +16,19 @@ import java.util.Set;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Entity
-@Table(name = "carts")
+@Table("carts")
 public class Cart {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "cart_id")
+    @Column("cart_id")
     private Long cartId;
-
-    @OneToMany(mappedBy = "cart", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
-    @Builder.Default
-    private Set<ItemInCart> itemsInCart = new HashSet<>();
 
     @NotNull
     @PositiveOrZero
-    @Column(name = "total", nullable = false, precision = 10, scale = 2)
+    @Column("total")
     private BigDecimal total;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "cart_status", nullable = false)
+    @Column("cart_status")
     private CartStatus cartStatus;
 
 }
