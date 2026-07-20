@@ -3,6 +3,8 @@ package ru.yandex.practicum.market.service.impl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 import ru.yandex.practicum.market.dto.OrderDto;
 import ru.yandex.practicum.market.entity.Order;
 import ru.yandex.practicum.market.exception.OrderNotFoundException;
@@ -22,8 +24,8 @@ public class OrderServiceImpl implements OrderService {
 
     @Transactional(readOnly = true)
     @Override
-    public List<OrderDto> getOrders() {
-        List<Order> orders = orderRepository.findAll();
+    public Flux<OrderDto> getOrders() {
+        Flux<Order> orders = orderRepository.findAll();
         return orders.stream()
                 .map(orderMapper::toOrderDto)
                 .collect(Collectors.toList());
@@ -31,14 +33,14 @@ public class OrderServiceImpl implements OrderService {
 
     @Transactional(readOnly = true)
     @Override
-    public OrderDto getOrderById(Long orderId) {
+    public Mono<OrderDto> getOrderById(Long orderId) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new OrderNotFoundException("Заказ с id = " + orderId + " не найден"));
         return orderMapper.toOrderDto(order);
     }
 
     @Override
-    public Order save(Order order) {
+    public Mono<Order> save(Order order) {
         return orderRepository.save(order);
     }
 

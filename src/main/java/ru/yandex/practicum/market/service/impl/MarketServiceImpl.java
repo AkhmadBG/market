@@ -5,8 +5,10 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import reactor.core.publisher.Mono;
 import ru.yandex.practicum.market.dto.ItemDto;
 import ru.yandex.practicum.market.dto.ItemsPageDto;
+import ru.yandex.practicum.market.dto.OrderDto;
 import ru.yandex.practicum.market.dto.PagingDto;
 import ru.yandex.practicum.market.entity.*;
 import ru.yandex.practicum.market.enums.Action;
@@ -34,9 +36,9 @@ public class MarketServiceImpl implements MarketService {
 
     @Transactional
     @Override
-    public ItemsPageDto getItems(String search, Pageable pageable) {
+    public Mono<ItemsPageDto> getItems(String search, Pageable pageable) {
         Page<Item> itemsPage = itemService.findByTitleOrDescription(search, search, pageable);
-        Cart cart = cartService.getActiveCart();
+        Cart cart = cartService.getActiveCartDto();
         Map<Long, Integer> counts = cart.getItemsInCart().stream()
                 .collect(Collectors.toMap(
                         item -> item.getItem().getItemId(),
@@ -65,15 +67,15 @@ public class MarketServiceImpl implements MarketService {
     }
 
     @Override
-    public ItemDto getItemDtoById(Long itemId) {
+    public Mono<ItemDto> getItemDtoById(Long itemId) {
         Item item = itemService.getItemById(itemId);
         Integer itemInCartCount = getItemInCartCount(itemId);
         return itemMapper.toItemDto(item, itemInCartCount);
     }
 
     @Override
-    public Integer getItemInCartCount(Long itemId) {
-        Optional<ItemInCart> itemInCartOpt = itemInCartService.findByCart_CartStatusAndItem_ItemId(CartStatus.ACTIVE, itemId);
+    public Mono<Integer> getItemInCartCount(Long itemId) {
+        Optional<ItemInCart> itemInCartOpt = itemInCartService.findByCartStatusAndItemId(CartStatus.ACTIVE, itemId);
         if (itemInCartOpt.isPresent()) {
             return itemInCartOpt.get().getCount();
         } else {
@@ -83,7 +85,7 @@ public class MarketServiceImpl implements MarketService {
 
     @Transactional
     @Override
-    public ItemDto changeItemQuantityInItem(Long itemId, Action action) {
+    public Mono<ItemDto> changeItemQuantityInItem(Long itemId, Action action) {
         changeItemQuantityInCart(itemId, action);
         Integer itemInCartCount = getItemInCartCount(itemId);
         Item item = itemService.getItemById(itemId);
@@ -92,8 +94,8 @@ public class MarketServiceImpl implements MarketService {
 
     @Transactional
     @Override
-    public void changeItemQuantityInCart(Long itemId, Action action) {
-        Cart cart = cartService.getActiveCart();
+    public Mono<Void> changeItemQuantityInCart(Long itemId, Action action) {
+        Cart cart = cartService.getActiveCartDto();
 
         Item item = itemService.getItemById(itemId);
 
@@ -149,8 +151,8 @@ public class MarketServiceImpl implements MarketService {
 
     @Transactional
     @Override
-    public Long createOrder() {
-        Cart cart = cartService.getActiveCart();
+    public Mono<OrderDto> createOrder() {
+        Cart cart = cartService.getActiveCartDto();
 
         if (cart.getItemsInCart().isEmpty()) {
             throw new CartIsEmptyException("Корзина пуста");
@@ -168,7 +170,7 @@ public class MarketServiceImpl implements MarketService {
         Order newOrder = orderService.save(order);
 
         cartService.closeCart();
-        return newOrder.getOrderId();
+        return newOrder;
     }
 
     private List<List<ItemDto>> splitByThree(List<ItemDto> items) {

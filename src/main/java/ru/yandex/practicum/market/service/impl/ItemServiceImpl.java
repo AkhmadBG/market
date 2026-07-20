@@ -4,6 +4,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 import ru.yandex.practicum.market.entity.Item;
 import ru.yandex.practicum.market.exception.ItemNotFoundException;
 import ru.yandex.practicum.market.repository.ItemRepository;
@@ -16,14 +18,16 @@ public class ItemServiceImpl implements ItemService {
     private final ItemRepository itemRepository;
 
     @Override
-    public Item getItemById(Long itemId) {
+    public Mono<Item> getItemById(Long itemId) {
         return itemRepository.findById(itemId)
-                .orElseThrow(() -> new ItemNotFoundException("Товар с id " + itemId + " не найден"));
+                .switchIfEmpty(
+                        Mono.error(new ItemNotFoundException("Товар с id " + itemId + " не найден"))
+                );
     }
 
     @Override
-    public Page<Item> findByTitleOrDescription(String title, String description, Pageable pageable) {
-        return itemRepository.findByTitleContainingIgnoreCaseOrDescriptionContainingIgnoreCase(title, description, pageable);
+    public Flux<Item> findByTitleOrDescription(String title, String description, Pageable pageable) {
+        return itemRepository.findByTitleOrDescription(title, description, pageable);
     }
 
 }

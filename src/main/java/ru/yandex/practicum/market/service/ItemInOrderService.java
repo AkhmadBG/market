@@ -1,9 +1,10 @@
 package ru.yandex.practicum.market.service;
 
+import reactor.core.publisher.Mono;
 import ru.yandex.practicum.market.entity.ItemInOrder;
 
 public interface ItemInOrderService {
 
-    ItemInOrder save(ItemInOrder itemInOrder);
+    Mono<ItemInOrder> save(ItemInOrder itemInOrder);
 
 }

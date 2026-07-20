@@ -1,14 +1,18 @@
 package ru.yandex.practicum.market.service;
 
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 import ru.yandex.practicum.market.entity.ItemInCart;
 import ru.yandex.practicum.market.enums.CartStatus;
 
-import java.util.Optional;
-
 public interface ItemInCartService {
 
-    Optional<ItemInCart> findByCart_CartStatusAndItem_ItemId(CartStatus cartStatus, Long itemId);
+    Mono<ItemInCart> findByCartStatusAndItemId(CartStatus cartStatus, Long itemId);
 
-    void save(ItemInCart itemInCart);
+    Flux<ItemInCart> findAllByCartId(Long cartId);
+
+    Mono<ItemInCart> save(ItemInCart item);
+
+    Mono<Void> delete(Long id);
 
 }

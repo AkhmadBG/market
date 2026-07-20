@@ -3,6 +3,7 @@ package ru.yandex.practicum.market.service.impl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import reactor.core.publisher.Mono;
 import ru.yandex.practicum.market.dto.CartDto;
 import ru.yandex.practicum.market.entity.Cart;
 import ru.yandex.practicum.market.enums.CartStatus;
@@ -21,29 +22,30 @@ public class CartServiceImpl implements CartService {
     private final CartMapper cartMapper;
 
     @Transactional
-    @Override
-    public CartDto getItemsInCart() {
-        Cart cart = getActiveCart();
-        return cartMapper.toCartDto(cart);
+    public Mono<CartDto> getActiveCartDto() {
+        return getOrCreateActiveCart()
+                .map(cartMapper::toCartDto);
     }
 
     @Transactional
     @Override
-    public void closeCart() {
-        Cart cart = getActiveCart();
-        cart.setCartStatus(CartStatus.CLOSED);
+    public Mono<Void> closeCart() {
+        return getOrCreateActiveCart()
+                .flatMap(cart -> {
+                    cart.setCartStatus(CartStatus.CLOSED);
+                    return cartRepository.save(cart);
+                }).then();
     }
 
     @Transactional
     @Override
-    public Cart getActiveCart() {
+    public Mono<Cart> getOrCreateActiveCart() {
         return cartRepository.findByCartStatus(CartStatus.ACTIVE)
-                .orElseGet(
-                        () -> cartRepository.save(
+                .switchIfEmpty(
+                        cartRepository.save(
                                 Cart.builder()
                                         .total(BigDecimal.ZERO)
                                         .cartStatus(CartStatus.ACTIVE)
-                                        .itemsInCart(new HashSet<>())
                                         .build()
                         )
                 );

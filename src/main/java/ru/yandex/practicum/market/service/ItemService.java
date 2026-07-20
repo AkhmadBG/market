@@ -1,13 +1,14 @@
 package ru.yandex.practicum.market.service;
 
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 import ru.yandex.practicum.market.entity.Item;
 
 public interface ItemService {
 
-    Item getItemById(Long itemId);
+    Mono<Item> getItemById(Long itemId);
 
-    Page<Item> findByTitleOrDescription(String title, String description, Pageable pageable);
+    Flux<Item> findByTitleOrDescription(String title, String description, Pageable pageable);
 
 }
