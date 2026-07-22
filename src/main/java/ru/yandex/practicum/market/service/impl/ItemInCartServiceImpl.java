@@ -9,8 +9,6 @@ import ru.yandex.practicum.market.enums.CartStatus;
 import ru.yandex.practicum.market.repository.ItemInCartRepository;
 import ru.yandex.practicum.market.service.ItemInCartService;
 
-import java.util.Optional;
-
 @Service
 @RequiredArgsConstructor
 public class ItemInCartServiceImpl implements ItemInCartService {
@@ -19,12 +17,12 @@ public class ItemInCartServiceImpl implements ItemInCartService {
 
     @Override
     public Mono<ItemInCart> findByCartStatusAndItemId(CartStatus cartStatus, Long itemId) {
-        return itemInCartRepository.findByCart_CartStatusAndItem_ItemId(cartStatus, itemId);
+        return itemInCartRepository.findByCartStatusAndItemId(cartStatus, itemId);
     }
 
     @Override
     public Flux<ItemInCart> findAllByCartId(Long cartId) {
-        return null;
+        return itemInCartRepository.findAllByCartId(cartId);
     }
 
     @Override
@@ -34,7 +32,12 @@ public class ItemInCartServiceImpl implements ItemInCartService {
 
     @Override
     public Mono<Void> delete(Long id) {
-        return null;
+        return itemInCartRepository.deleteById(id);
+    }
+
+    @Override
+    public Mono<ItemInCart> findByCartIdAndItemId(Long cartId, Long itemId) {
+        return itemInCartRepository.findByCartIdAndItemId(cartId, itemId);
     }
 
 }

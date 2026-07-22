@@ -12,4 +12,6 @@ public interface CartService {
 
     Mono<Cart> getOrCreateActiveCart();
 
+    Mono<Cart> save(Cart cart);
+
 }

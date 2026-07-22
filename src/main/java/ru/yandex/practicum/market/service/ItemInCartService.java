@@ -15,4 +15,6 @@ public interface ItemInCartService {
 
     Mono<Void> delete(Long id);
 
+    Mono<ItemInCart> findByCartIdAndItemId(Long cartId, Long itemId);
+
 }

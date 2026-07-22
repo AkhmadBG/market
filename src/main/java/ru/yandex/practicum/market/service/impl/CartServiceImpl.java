@@ -12,7 +12,6 @@ import ru.yandex.practicum.market.repository.CartRepository;
 import ru.yandex.practicum.market.service.CartService;
 
 import java.math.BigDecimal;
-import java.util.HashSet;
 
 @Service
 @RequiredArgsConstructor
@@ -49,6 +48,11 @@ public class CartServiceImpl implements CartService {
                                         .build()
                         )
                 );
+    }
+
+    @Override
+    public Mono<Cart> save(Cart cart) {
+        return cartRepository.save(cart);
     }
 
 }

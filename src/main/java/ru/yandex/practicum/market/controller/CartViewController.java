@@ -22,7 +22,7 @@ public class CartViewController {
 
     @GetMapping
     public String getItemsInCart(Model model) {
-        CartDto cart = cartService.getItemsInCart();
+        CartDto cart = cartService.getActiveCartDto();
         model.addAttribute("items", cart.items());
         model.addAttribute("total", cart.total());
         return "cart";

@@ -25,18 +25,16 @@ public class OrderServiceImpl implements OrderService {
     @Transactional(readOnly = true)
     @Override
     public Flux<OrderDto> getOrders() {
-        Flux<Order> orders = orderRepository.findAll();
-        return orders.stream()
-                .map(orderMapper::toOrderDto)
-                .collect(Collectors.toList());
+        return orderRepository.findAll()
+                .map(orderMapper::toOrderDto);
     }
 
     @Transactional(readOnly = true)
     @Override
     public Mono<OrderDto> getOrderById(Long orderId) {
-        Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new OrderNotFoundException("Заказ с id = " + orderId + " не найден"));
-        return orderMapper.toOrderDto(order);
+        return orderRepository.findById(orderId)
+                .map(orderMapper::toOrderDto)
+                .switchIfEmpty(Mono.error(new OrderNotFoundException("Заказ с id = " + orderId + " не найден")));
     }
 
     @Override
