@@ -1,15 +1,16 @@
 package ru.yandex.practicum.market.service;
 
-import org.springframework.data.domain.Pageable;
 import reactor.core.publisher.Mono;
 import ru.yandex.practicum.market.dto.ItemDto;
 import ru.yandex.practicum.market.dto.ItemsPageDto;
 import ru.yandex.practicum.market.dto.OrderDto;
 import ru.yandex.practicum.market.enums.Action;
+import ru.yandex.practicum.market.enums.ItemSort;
 
 public interface MarketService {
 
-    Mono<ItemsPageDto> getItems(String search, Pageable pageable);
+
+    Mono<ItemsPageDto> getItems(String search, ItemSort itemSort, int pageNumber, int pageSize);
 
     Mono<ItemDto> getItemDtoById(Long itemId);
 
@@ -20,5 +21,4 @@ public interface MarketService {
     Mono<Void> changeItemQuantityInCart(Long itemId, Action action);
 
     Mono<OrderDto> createOrder();
-
 }

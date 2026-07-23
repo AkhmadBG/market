@@ -5,13 +5,12 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import ru.yandex.practicum.market.dto.SearchResult;
 import ru.yandex.practicum.market.entity.Item;
+import ru.yandex.practicum.market.enums.ItemSort;
 
 public interface ItemService {
 
     Mono<Item> getItemById(Long itemId);
 
-//    Flux<Item> findByTitleOrDescription(String title, String description, Pageable pageable);
-
-    Mono<SearchResult> search(String search, Pageable pageable);
+    Mono<SearchResult> search(String search, ItemSort itemSort, int pageNumber, int pageSize);
 
 }

@@ -9,6 +9,7 @@ import ru.yandex.practicum.market.dto.*;
 import ru.yandex.practicum.market.entity.*;
 import ru.yandex.practicum.market.enums.Action;
 import ru.yandex.practicum.market.enums.CartStatus;
+import ru.yandex.practicum.market.enums.ItemSort;
 import ru.yandex.practicum.market.mapper.ItemMapper;
 import ru.yandex.practicum.market.mapper.OrderMapper;
 import ru.yandex.practicum.market.service.*;
@@ -33,8 +34,8 @@ public class MarketServiceImpl implements MarketService {
 
     @Transactional
     @Override
-    public Mono<ItemsPageDto> getItems(String search, Pageable pageable) {
-        Mono<SearchResult> items = itemService.search(search, pageable);
+    public Mono<ItemsPageDto> getItems(String search, ItemSort itemSort, int pageNumber, int pageSize) {
+        Mono<SearchResult> items = itemService.search(search, itemSort, pageNumber, pageSize);
         Mono<CartDto> cart = cartService.getActiveCartDto();
         return Mono.zip(items, cart)
                 .map(tuple -> {

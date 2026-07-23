@@ -35,8 +35,7 @@ public class ItemViewController {
                                  @RequestParam(defaultValue = "5") @Min(1) @Max(100) int pageSize,
                                  Model model) {
 
-        Pageable pageable = PageRequest.of(pageNumber - 1, pageSize, getSort(itemSort));
-        return marketService.getItems(search, pageable)
+        return marketService.getItems(search, itemSort, pageNumber, pageSize)
                 .map(itemsPageDto -> {
                     model.addAttribute("items", itemsPageDto.items());
                     model.addAttribute("paging", itemsPageDto.paging());
