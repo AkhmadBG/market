@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import reactor.core.publisher.Mono;
 import ru.yandex.practicum.market.dto.CartDto;
 import ru.yandex.practicum.market.enums.Action;
 import ru.yandex.practicum.market.service.CartService;
@@ -21,18 +22,20 @@ public class CartViewController {
     private final MarketService marketService;
 
     @GetMapping
-    public String getItemsInCart(Model model) {
-        CartDto cart = cartService.getActiveCartDto();
-        model.addAttribute("items", cart.items());
-        model.addAttribute("total", cart.total());
-        return "cart";
+    public Mono<String> getItemsInCart(Model model) {
+        return cartService.getActiveCartDto()
+                        .map(cartDto -> {
+                            model.addAttribute("items", cartDto.items());
+                            model.addAttribute("total", cartDto.total());
+                            return "cart";
+                        });
     }
 
     @PostMapping
-    public String changeItemsQuantityInCart(@RequestParam(name = "id") Long itemId,
+    public Mono<String> changeItemsQuantityInCart(@RequestParam(name = "id") Long itemId,
                                             @RequestParam Action action) {
-        marketService.changeItemQuantityInCart(itemId, action);
-        return "redirect:/cart/items";
+        return marketService.changeItemQuantityInCart(itemId, action)
+                .thenReturn("redirect:/cart/items");
     }
 
 }
