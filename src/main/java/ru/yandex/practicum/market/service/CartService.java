@@ -5,7 +5,6 @@ import ru.yandex.practicum.market.entity.Cart;
 
 public interface CartService {
 
-//    Mono<Cart> getActiveCartDto();
 
     Mono<Void> closeCart();
 

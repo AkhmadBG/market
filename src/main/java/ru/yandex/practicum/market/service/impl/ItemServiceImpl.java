@@ -1,7 +1,6 @@
 package ru.yandex.practicum.market.service.impl;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 import ru.yandex.practicum.market.dto.SearchResult;
@@ -18,7 +17,6 @@ import java.util.List;
 public class ItemServiceImpl implements ItemService {
 
     private final ItemRepository itemRepository;
-    private final DatabaseClient databaseClient;
 
     @Override
     public Mono<Item> getItemById(Long itemId) {

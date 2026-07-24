@@ -3,13 +3,9 @@ package ru.yandex.practicum.market.service.impl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import ru.yandex.practicum.market.dto.CartDto;
 import ru.yandex.practicum.market.entity.Cart;
-import ru.yandex.practicum.market.entity.ItemInCart;
 import ru.yandex.practicum.market.enums.CartStatus;
-import ru.yandex.practicum.market.mapper.CartMapper;
 import ru.yandex.practicum.market.repository.CartRepository;
 import ru.yandex.practicum.market.service.CartService;
 

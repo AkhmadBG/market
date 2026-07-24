@@ -26,14 +26,14 @@ public class OrderViewController {
 
     @GetMapping("/orders/{id}")
     public Mono<String> getOrderById(@PathVariable(name = "id") Long orderId,
-                               @RequestParam(required = false, defaultValue = "false") boolean newOrder,
-                               Model model) {
+                                     @RequestParam(required = false, defaultValue = "false") boolean newOrder,
+                                     Model model) {
         return marketService.getOrderById(orderId)
-                        .map(orderDto -> {
-                            model.addAttribute("order", orderDto);
-                            model.addAttribute("newOrder", newOrder);
-                            return "order";
-                        });
+                .map(orderDto -> {
+                    model.addAttribute("order", orderDto);
+                    model.addAttribute("newOrder", newOrder);
+                    return "order";
+                });
     }
 
     @PostMapping("/buy")

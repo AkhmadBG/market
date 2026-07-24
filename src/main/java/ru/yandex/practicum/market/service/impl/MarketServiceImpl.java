@@ -12,7 +12,6 @@ import ru.yandex.practicum.market.enums.CartStatus;
 import ru.yandex.practicum.market.enums.ItemSort;
 import ru.yandex.practicum.market.exception.OrderNotFoundException;
 import ru.yandex.practicum.market.mapper.ItemMapper;
-import ru.yandex.practicum.market.mapper.OrderMapper;
 import ru.yandex.practicum.market.service.*;
 
 import java.math.BigDecimal;
@@ -31,7 +30,6 @@ public class MarketServiceImpl implements MarketService {
     private final ItemInCartService itemInCartService;
     private final ItemInOrderService itemInOrderService;
     private final ItemMapper itemMapper;
-    private final OrderMapper orderMapper;
 
     @Override
     public Mono<ItemsPageDto> getItems(String search, ItemSort itemSort, int pageNumber, int pageSize) {
@@ -84,14 +82,6 @@ public class MarketServiceImpl implements MarketService {
                 .map(ItemInCart::getCount)
                 .defaultIfEmpty(0);
     }
-
-//    @Transactional
-//    @Override
-//    public Mono<ItemDto> changeItemQuantityInItem(Long itemId, Action action) {
-//        Mono<Void> voidMono = changeItemQuantityInCart(itemId, action).then();
-//        Mono<ItemDto> itemDto = getItemDto(itemId);
-//        return itemDto;
-//    }
 
     @Transactional
     @Override
@@ -183,6 +173,10 @@ public class MarketServiceImpl implements MarketService {
                                                     itemsInOrder,
                                                     savedOrder.getTotalSum()
                                             ))
+                                            .flatMap(orderDto ->
+                                                    cartService.closeCart()
+                                                            .thenReturn(orderDto)
+                                            )
                             );
                 });
     }

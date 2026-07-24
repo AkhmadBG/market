@@ -61,7 +61,6 @@ public class ItemViewController {
     }
 
 
-
     @GetMapping("/items/{id}")
     public Mono<String> getItemById(@PathVariable(name = "id") Long itemId,
                                     Model model) {

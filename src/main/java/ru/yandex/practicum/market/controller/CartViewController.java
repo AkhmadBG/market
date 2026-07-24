@@ -6,10 +6,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
-import ru.yandex.practicum.market.dto.CartDto;
 import ru.yandex.practicum.market.dto.ChangeItemQuantityInCartRequest;
-import ru.yandex.practicum.market.enums.Action;
-import ru.yandex.practicum.market.service.CartService;
 import ru.yandex.practicum.market.service.MarketService;
 
 @Controller
@@ -17,7 +14,6 @@ import ru.yandex.practicum.market.service.MarketService;
 @RequestMapping("/cart/items")
 public class CartViewController {
 
-    private final CartService cartService;
     private final MarketService marketService;
 
     @GetMapping
@@ -29,13 +25,6 @@ public class CartViewController {
                     return "cart";
                 });
     }
-
-//    @PostMapping
-//    public Mono<String> changeItemsQuantityInCart(@RequestParam(name = "id") Long itemId,
-//                                                  @RequestParam Action action) {
-//        return marketService.changeItemQuantityInCart(itemId, action)
-//                .thenReturn("redirect:/cart/items");
-//    }
 
     @PostMapping
     public Mono<String> changeItemsQuantityInCart(@Valid @ModelAttribute ChangeItemQuantityInCartRequest request) {
