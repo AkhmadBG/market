@@ -85,7 +85,7 @@ public class MarketServiceImpl implements MarketService {
 
     @Transactional
     @Override
-    public Mono<Mono<ItemDto>> changeItemQuantityInCart(Long itemId, Action action) {
+    public Mono<ItemDto> changeItemQuantityInCart(Long itemId, Action action) {
         return cartService.getOrCreateActiveCart()
                 .flatMap(cart -> itemInCartService.findByCartIdAndItemId(cart.getCartId(), itemId)
                         .flatMap(itemInCart -> {
@@ -126,7 +126,7 @@ public class MarketServiceImpl implements MarketService {
                                         : Mono.empty()
                         )
                 )
-                .thenReturn(getItemDto(itemId));
+                .then(getItemDto(itemId));
     }
 
     @Transactional

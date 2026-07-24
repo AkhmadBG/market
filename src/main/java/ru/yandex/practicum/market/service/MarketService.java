@@ -17,7 +17,7 @@ public interface MarketService {
 
     Mono<Integer> getItemInCartCount(Long itemId);
 
-    Mono<Mono<ItemDto>> changeItemQuantityInCart(Long itemId, Action action);
+    Mono<ItemDto> changeItemQuantityInCart(Long itemId, Action action);
 
     Mono<OrderDto> createOrder();
 
