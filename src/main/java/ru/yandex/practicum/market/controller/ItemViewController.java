@@ -1,18 +1,17 @@
 package ru.yandex.practicum.market.controller;
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
 import reactor.core.publisher.Mono;
-import ru.yandex.practicum.market.enums.Action;
+import ru.yandex.practicum.market.dto.ChangeItemQuantityInItemRequest;
+import ru.yandex.practicum.market.dto.ChangeItemQuantityInItemsRequest;
 import ru.yandex.practicum.market.enums.ItemSort;
 import ru.yandex.practicum.market.service.MarketService;
 
@@ -46,26 +45,26 @@ public class ItemViewController {
     }
 
     @PostMapping("/items")
-    public Mono<String> changeItemQuantityInItems(@RequestParam(name = "id") Long itemId,
-                                                  @RequestParam(required = false, defaultValue = "") String search,
-                                                  @RequestParam(required = false, defaultValue = "NO") ItemSort itemSort,
-                                                  @RequestParam(required = false, defaultValue = "1") @Min(1) int pageNumber,
-                                                  @RequestParam(required = false, defaultValue = "5") @Min(1) @Max(100) int pageSize,
-                                                  @RequestParam Action action) {
+    public Mono<String> changeItemQuantityInItems(@Valid @ModelAttribute ChangeItemQuantityInItemsRequest request) {
         String redirect = UriComponentsBuilder
                 .fromPath("/items")
-                .queryParam("search", search)
-                .queryParam("itemSort", itemSort)
-                .queryParam("pageNumber", pageNumber)
-                .queryParam("pageSize", pageSize)
+                .queryParam("search", request.getSearch())
+                .queryParam("itemSort", request.getItemSort())
+                .queryParam("pageNumber", request.getPageNumber())
+                .queryParam("pageSize", request.getPageSize())
                 .build()
                 .toUriString();
-        return marketService.changeItemQuantityInCart(itemId, action)
+        return marketService.changeItemQuantityInCart(
+                        request.getId(),
+                        request.getAction())
                 .thenReturn("redirect:" + redirect);
     }
 
+
+
     @GetMapping("/items/{id}")
-    public Mono<String> getItemById(@PathVariable(name = "id") Long itemId, Model model) {
+    public Mono<String> getItemById(@PathVariable(name = "id") Long itemId,
+                                    Model model) {
         return marketService.getItemDtoById(itemId)
                 .map(itemDto -> {
                     model.addAttribute("item", itemDto);
@@ -75,21 +74,13 @@ public class ItemViewController {
 
     @PostMapping("/items/{id}")
     public Mono<String> changeItemQuantityInItem(@PathVariable(name = "id") Long itemId,
-                                                 @RequestParam Action action,
+                                                 @Valid @ModelAttribute ChangeItemQuantityInItemRequest request,
                                                  Model model) {
-        return marketService.changeItemQuantityInItem(itemId, action)
+        return marketService.changeItemQuantityInCart(itemId, request.getAction())
                 .map(itemDto -> {
                     model.addAttribute("item", itemDto);
                     return "item";
                 });
-    }
-
-    private Sort getSort(ItemSort itemSort) {
-        return switch (itemSort) {
-            case NO -> Sort.unsorted();
-            case ALPHA -> Sort.by("title");
-            case PRICE -> Sort.by("price");
-        };
     }
 
 }

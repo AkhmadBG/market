@@ -9,7 +9,5 @@ import ru.yandex.practicum.market.entity.Order;
 @Mapper(componentModel = "spring", uses = ItemMapper.class, unmappedTargetPolicy = ReportingPolicy.ERROR)
 public interface OrderMapper {
 
-    @Mapping(target = "items", source = "itemsInOrder")
-    OrderDto toOrderDto(Order order);
 
 }

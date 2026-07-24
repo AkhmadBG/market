@@ -9,8 +9,8 @@ import ru.yandex.practicum.market.entity.Cart;
 @Mapper(componentModel = "spring", uses = ItemMapper.class, unmappedTargetPolicy = ReportingPolicy.ERROR)
 public interface CartMapper {
 
-    @Mapping(target = "items", source = "cart.itemsInCart")
-    @Mapping(target = "total", source = "total")
-    CartDto toCartDto(Cart cart);
+//    @Mapping(target = "items", source = "cart.itemsInCart")
+//    @Mapping(target = "total", source = "total")
+//    CartDto toCartDto(Cart cart);
 
 }

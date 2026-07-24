@@ -15,23 +15,23 @@ public interface ItemMapper {
     @Mapping(target = "count", source = "itemInCartCount")
     ItemDto toItemDto(Item item, Integer itemInCartCount);
 
-    @Mapping(target = "item", source = "item")
+    @Mapping(target = "itemId", source = "itemInCart.itemId")
     @Mapping(target = "price", source = "itemInCart.price")
     @Mapping(target = "count", source = "itemInCart.count")
     @Mapping(target = "itemInOrderId", ignore = true)
-    @Mapping(target = "order", ignore = true)
+    @Mapping(target = "orderId", ignore = true)
     ItemInOrder toItemInOrder(ItemInCart itemInCart);
 
-    @Mapping(target = "itemDto", source = "item")
-    @Mapping(target = "itemDto.count", ignore = true)
-    ItemInOrderDto toItemInOrderDto(ItemInOrder itemInorder);
+//    @Mapping(target = "itemDto", source = "item")
+//    @Mapping(target = "itemDto.count", ignore = true)
+//    ItemInOrderDto toItemInOrderDto(ItemInOrder itemInorder, ItemDto item);
 
-    @Mapping(target = "itemId", source = "itemInCart.item.itemId")
-    @Mapping(target = "title", source = "itemInCart.item.title")
-    @Mapping(target = "description", source = "itemInCart.item.description")
-    @Mapping(target = "imgPath", source = "itemInCart.item.imgPath")
-    @Mapping(target = "price", source = "itemInCart.price")
-    @Mapping(target = "count", source = "itemInCart.count")
-    ItemDto toItemDtoFromItemInCart(ItemInCart itemInCart);
+//    @Mapping(target = "itemId", source = "itemInCart.itemId")
+//    @Mapping(target = "title", source = "itemInCart.item.title")
+//    @Mapping(target = "description", source = "itemInCart.item.description")
+//    @Mapping(target = "imgPath", source = "itemInCart.item.imgPath")
+//    @Mapping(target = "price", source = "itemInCart.price")
+//    @Mapping(target = "count", source = "itemInCart.count")
+//    ItemDto toItemDtoFromItemInCart(ItemInCart itemInCart);
 
 }

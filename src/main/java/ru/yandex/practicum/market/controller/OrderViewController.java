@@ -6,18 +6,16 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
 import ru.yandex.practicum.market.service.MarketService;
-import ru.yandex.practicum.market.service.OrderService;
 
 @Controller
 @RequiredArgsConstructor
 public class OrderViewController {
 
-    private final OrderService orderService;
     private final MarketService marketService;
 
     @GetMapping("/orders")
     public Mono<String> getOrders(Model model) {
-        return orderService.getOrders()
+        return marketService.getOrders()
                 .collectList()
                 .map(orders -> {
                     model.addAttribute("orders", orders);
@@ -30,7 +28,7 @@ public class OrderViewController {
     public Mono<String> getOrderById(@PathVariable(name = "id") Long orderId,
                                @RequestParam(required = false, defaultValue = "false") boolean newOrder,
                                Model model) {
-        return orderService.getOrderById(orderId)
+        return marketService.getOrderById(orderId)
                         .map(orderDto -> {
                             model.addAttribute("order", orderDto);
                             model.addAttribute("newOrder", newOrder);
