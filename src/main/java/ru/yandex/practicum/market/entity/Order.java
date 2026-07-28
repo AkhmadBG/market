@@ -1,13 +1,13 @@
 package ru.yandex.practicum.market.entity;
 
-import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
 import lombok.*;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.relational.core.mapping.Column;
+import org.springframework.data.relational.core.mapping.Table;
 
 import java.math.BigDecimal;
-import java.util.HashSet;
-import java.util.Set;
 
 @Getter
 @Setter
@@ -15,27 +15,16 @@ import java.util.Set;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Entity
-@Table(name = "orders")
+@Table("orders")
 public class Order {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "order_id")
+    @Column("order_id")
     private Long orderId;
-
-    @OneToMany(mappedBy = "order", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
-    @Builder.Default
-    private Set<ItemInOrder> itemsInOrder = new HashSet<>();
 
     @NotNull
     @PositiveOrZero
-    @Column(name = "total_sum", nullable = false, precision = 10, scale = 2)
+    @Column("total_sum")
     private BigDecimal totalSum;
-
-    public void addItemInOrder(ItemInOrder itemInOrder) {
-        this.itemsInOrder.add(itemInOrder);
-        itemInOrder.setOrder(this);
-    }
 
 }

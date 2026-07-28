@@ -1,9 +1,11 @@
 package ru.yandex.practicum.market.entity;
 
-import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.*;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.relational.core.mapping.Column;
+import org.springframework.data.relational.core.mapping.Table;
 
 import java.math.BigDecimal;
 
@@ -13,31 +15,27 @@ import java.math.BigDecimal;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Entity
-@Table(name = "items_in_orders")
+@Table("items_in_orders")
 public class ItemInOrder {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "item_in_order_id")
+    @Column("item_in_order_id")
     private Long itemInOrderId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "item_id", nullable = false)
-    private Item item;
+    @Column("item_id")
+    private Long itemId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "order_id")
-    private Order order;
+    @Column("order_id")
+    private Long orderId;
 
     @NotNull
     @Positive
-    @Column(name = "price", nullable = false, precision = 10, scale = 2)
+    @Column("price")
     private BigDecimal price;
 
     @NotNull
     @Positive
-    @Column(name = "count", nullable = false)
+    @Column("count")
     private Integer count;
 
 }

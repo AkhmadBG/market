@@ -5,6 +5,8 @@ import java.util.Set;
 
 public record CartDto(
 
+        Long cartId,
+
         Set<ItemDto> items,
 
         BigDecimal total

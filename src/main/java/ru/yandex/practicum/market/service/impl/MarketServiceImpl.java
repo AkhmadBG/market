@@ -1,17 +1,16 @@
 package ru.yandex.practicum.market.service.impl;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.yandex.practicum.market.dto.ItemDto;
-import ru.yandex.practicum.market.dto.ItemsPageDto;
-import ru.yandex.practicum.market.dto.PagingDto;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+import ru.yandex.practicum.market.dto.*;
 import ru.yandex.practicum.market.entity.*;
 import ru.yandex.practicum.market.enums.Action;
 import ru.yandex.practicum.market.enums.CartStatus;
-import ru.yandex.practicum.market.exception.CartIsEmptyException;
+import ru.yandex.practicum.market.enums.ItemSort;
+import ru.yandex.practicum.market.exception.OrderNotFoundException;
 import ru.yandex.practicum.market.mapper.ItemMapper;
 import ru.yandex.practicum.market.service.*;
 
@@ -19,7 +18,6 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -30,145 +28,243 @@ public class MarketServiceImpl implements MarketService {
     private final CartService cartService;
     private final OrderService orderService;
     private final ItemInCartService itemInCartService;
+    private final ItemInOrderService itemInOrderService;
     private final ItemMapper itemMapper;
 
-    @Transactional
     @Override
-    public ItemsPageDto getItems(String search, Pageable pageable) {
-        Page<Item> itemsPage = itemService.findByTitleOrDescription(search, search, pageable);
-        Cart cart = cartService.getActiveCart();
-        Map<Long, Integer> counts = cart.getItemsInCart().stream()
-                .collect(Collectors.toMap(
-                        item -> item.getItem().getItemId(),
-                        ItemInCart::getCount
-                ));
+    public Mono<ItemsPageDto> getItems(String search, ItemSort itemSort, int pageNumber, int pageSize) {
+        Mono<SearchResult> items = itemService.search(search, itemSort, pageNumber, pageSize);
+        Mono<CartDto> cart = getActiveCartDto();
+        return Mono.zip(items, cart)
+                .map(tuple -> {
 
-        List<ItemDto> itemsDto = itemsPage.getContent().stream()
-                .map(item -> new ItemDto(
-                        item.getItemId(),
-                        item.getTitle(),
-                        item.getDescription(),
-                        item.getImgPath(),
-                        item.getPrice(),
-                        counts.getOrDefault(item.getItemId(), 0)
-                ))
-                .toList();
+                    SearchResult result = tuple.getT1();
 
-        return new ItemsPageDto(
-                splitByThree(itemsDto),
-                new PagingDto(
-                        itemsPage.getNumber() + 1,
-                        itemsPage.getSize(),
-                        itemsPage.hasPrevious(),
-                        itemsPage.hasNext()
-                ));
+                    CartDto cartDto = tuple.getT2();
+
+                    Map<Long, Integer> counts = cartDto.items().stream()
+                            .collect(Collectors.toMap(
+                                    ItemDto::itemId,
+                                    ItemDto::count));
+
+                    List<ItemDto> itemsDto = result.items().stream()
+                            .map(item -> new ItemDto(
+                                    item.getItemId(),
+                                    item.getTitle(),
+                                    item.getDescription(),
+                                    item.getImgPath(),
+                                    item.getPrice(),
+                                    counts.getOrDefault(item.getItemId(), 0)
+                            ))
+                            .toList();
+
+                    return new ItemsPageDto(
+                            splitByThree(itemsDto),
+                            new PagingDto(
+                                    pageNumber,
+                                    pageSize,
+                                    pageNumber > 1,
+                                    (long) pageSize * pageNumber < result.total()
+                            ));
+                });
+
     }
 
     @Override
-    public ItemDto getItemDtoById(Long itemId) {
-        Item item = itemService.getItemById(itemId);
-        Integer itemInCartCount = getItemInCartCount(itemId);
-        return itemMapper.toItemDto(item, itemInCartCount);
+    public Mono<ItemDto> getItemDtoById(Long itemId) {
+        return getItemDto(itemId);
     }
 
     @Override
-    public Integer getItemInCartCount(Long itemId) {
-        Optional<ItemInCart> itemInCartOpt = itemInCartService.findByCart_CartStatusAndItem_ItemId(CartStatus.ACTIVE, itemId);
-        if (itemInCartOpt.isPresent()) {
-            return itemInCartOpt.get().getCount();
-        } else {
-            return 0;
-        }
-    }
-
-    @Transactional
-    @Override
-    public ItemDto changeItemQuantityInItem(Long itemId, Action action) {
-        changeItemQuantityInCart(itemId, action);
-        Integer itemInCartCount = getItemInCartCount(itemId);
-        Item item = itemService.getItemById(itemId);
-        return itemMapper.toItemDto(item, itemInCartCount);
+    public Mono<Integer> getItemInCartCount(Long itemId) {
+        Mono<ItemInCart> itemInCart = itemInCartService.findByCartStatusAndItemId(CartStatus.ACTIVE, itemId);
+        return itemInCart
+                .map(ItemInCart::getCount)
+                .defaultIfEmpty(0);
     }
 
     @Transactional
     @Override
-    public void changeItemQuantityInCart(Long itemId, Action action) {
-        Cart cart = cartService.getActiveCart();
+    public Mono<ItemDto> changeItemQuantityInCart(Long itemId, Action action) {
+        return cartService.getOrCreateActiveCart()
+                .flatMap(cart -> itemInCartService.findByCartIdAndItemId(cart.getCartId(), itemId)
+                        .flatMap(itemInCart -> {
+                            Mono<?> operation;
+                            switch (action) {
+                                case PLUS -> {
+                                    itemInCart.setCount(itemInCart.getCount() + 1);
+                                    operation = itemInCartService.save(itemInCart);
+                                }
+                                case MINUS -> {
+                                    if (itemInCart.getCount() == 1) {
+                                        operation = itemInCartService.delete(itemInCart.getItemInCartId());
+                                    } else {
+                                        itemInCart.setCount(itemInCart.getCount() - 1);
+                                        operation = itemInCartService.save(itemInCart);
+                                    }
+                                }
+                                case DELETE -> operation = itemInCartService.delete(itemInCart.getItemInCartId());
+                                default ->
+                                        operation = Mono.error(new IllegalStateException("Неизвестное действие: " + action));
+                            }
+                            return operation.then(recalculateCartTotal(cart));
+                        })
+                        .switchIfEmpty(
+                                action == Action.PLUS
+                                        ? itemService.getItemById(itemId)
+                                        .flatMap(item ->
+                                                itemInCartService.save(
+                                                        ItemInCart.builder()
+                                                                .cartId(cart.getCartId())
+                                                                .itemId(item.getItemId())
+                                                                .price(item.getPrice())
+                                                                .count(1)
+                                                                .build()
+                                                )
+                                        )
+                                        .then(recalculateCartTotal(cart))
+                                        : Mono.empty()
+                        )
+                )
+                .then(getItemDto(itemId));
+    }
 
-        Item item = itemService.getItemById(itemId);
-
-        Optional<ItemInCart> itemInCartOpt = cart.getItemsInCart().stream()
-                .filter(i -> i.getItem().getItemId().equals(itemId))
-                .findFirst();
-
-        if (itemInCartOpt.isEmpty()) {
-            switch (action) {
-                case PLUS -> {
-                    ItemInCart itemInCart = ItemInCart.builder()
-                            .cart(cart)
-                            .item(item)
-                            .count(1)
-                            .price(item.getPrice())
+    @Transactional
+    @Override
+    public Mono<OrderDto> createOrder() {
+        return cartService.getOrCreateActiveCart()
+                .flatMap(cart -> {
+                    Order order = Order.builder()
+                            .totalSum(cart.getTotal())
                             .build();
-                    cart.getItemsInCart().add(itemInCart);
-                    itemInCartService.save(itemInCart);
-                }
-                case MINUS, DELETE -> {
-                }
-                default -> throw new IllegalStateException("Значения " + action + " нет в enum Action");
-            }
-        } else {
-            ItemInCart itemInCart = itemInCartOpt.get();
-            switch (action) {
-                case PLUS -> {
-                    itemInCart.setCount(itemInCart.getCount() + 1);
-                    itemInCartService.save(itemInCart);
-                }
-                case MINUS -> {
-                    if (itemInCart.getCount() == 1) {
-                        cart.getItemsInCart().remove(itemInCart);
-                    } else {
-                        itemInCart.setCount(itemInCart.getCount() - 1);
-                        itemInCartService.save(itemInCart);
-                    }
-                }
-                case DELETE -> cart.getItemsInCart().remove(itemInCart);
-                default -> throw new IllegalStateException("Значения " + action + " нет в enum Action");
-            }
-
-            BigDecimal total = cart.getItemsInCart().stream()
-                    .map(
-                            i -> i.getItem().getPrice()
-                                    .multiply(BigDecimal.valueOf(i.getCount()))
-                    )
-                    .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-            cart.setTotal(total);
-        }
+                    return orderService.save(order)
+                            .flatMap(savedOrder ->
+                                    itemInCartService.findAllByCartId(cart.getCartId())
+                                            .map(itemInCart -> new ItemInOrder(
+                                                    null,
+                                                    itemInCart.getItemId(),
+                                                    savedOrder.getOrderId(),
+                                                    itemInCart.getPrice(),
+                                                    itemInCart.getCount()
+                                            ))
+                                            .flatMap(itemInOrderService::save)
+                                            .flatMap(savedItemInOrder ->
+                                                    itemService.getItemById(savedItemInOrder.getItemId())
+                                                            .map(item -> {
+                                                                ItemDto itemDto = new ItemDto(
+                                                                        item.getItemId(),
+                                                                        item.getTitle(),
+                                                                        item.getDescription(),
+                                                                        item.getImgPath(),
+                                                                        item.getPrice(),
+                                                                        savedItemInOrder.getCount()
+                                                                );
+                                                                return new ItemInOrderDto(
+                                                                        savedItemInOrder.getItemInOrderId(),
+                                                                        itemDto,
+                                                                        savedItemInOrder.getPrice(),
+                                                                        savedItemInOrder.getCount()
+                                                                );
+                                                            })
+                                            )
+                                            .collect(Collectors.toSet())
+                                            .map(itemsInOrder -> new OrderDto(
+                                                    savedOrder.getOrderId(),
+                                                    itemsInOrder,
+                                                    savedOrder.getTotalSum()
+                                            ))
+                                            .flatMap(orderDto ->
+                                                    cartService.closeCart()
+                                                            .thenReturn(orderDto)
+                                            )
+                            );
+                });
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     @Override
-    public Long createOrder() {
-        Cart cart = cartService.getActiveCart();
+    public Mono<OrderDto> getOrderById(Long orderId) {
+        return orderService.getOrderById(orderId)
+                .flatMap(order -> {
+                    return itemInOrderService.getItemInOrderByOrderId(order.getOrderId())
+                            .flatMap(itemInOrder -> {
+                                return itemService.getItemById(itemInOrder.getItemId())
+                                        .map(item -> {
+                                            ItemDto itemDto = new ItemDto(
+                                                    item.getItemId(),
+                                                    item.getTitle(),
+                                                    item.getDescription(),
+                                                    item.getImgPath(),
+                                                    item.getPrice(),
+                                                    itemInOrder.getCount()
+                                            );
+                                            return new ItemInOrderDto(
+                                                    itemInOrder.getItemInOrderId(),
+                                                    itemDto,
+                                                    itemInOrder.getPrice(),
+                                                    itemInOrder.getCount()
+                                            );
+                                        });
+                            }).collect(Collectors.toSet())
+                            .map(itemsInOrder -> new OrderDto(
+                                    order.getOrderId(),
+                                    itemsInOrder,
+                                    order.getTotalSum()
+                            ));
+                })
+                .switchIfEmpty(Mono.error(new OrderNotFoundException("Заказ с id = " + orderId + " не найден")));
+    }
 
-        if (cart.getItemsInCart().isEmpty()) {
-            throw new CartIsEmptyException("Корзина пуста");
-        }
+    @Override
+    public Mono<CartDto> getActiveCartDto() {
+        return cartService.getOrCreateActiveCart()
+                .flatMap(cart ->
+                        itemInCartService.findAllByCartId(cart.getCartId())
+                                .flatMap(itemInCart -> itemService.getItemById(itemInCart.getItemId())
+                                        .map(item -> itemMapper.toItemDto(item, itemInCart.getCount())))
+                                .collect(Collectors.toSet())
+                                .map(items -> new CartDto(cart.getCartId(), items, cart.getTotal()))
+                );
+    }
 
-        Order order = new Order();
+    @Transactional(readOnly = true)
+    @Override
+    public Flux<OrderDto> getOrders() {
+        return orderService.getOrders()
+                .flatMap(order -> {
+                    return itemInOrderService.getItemInOrderByOrderId(order.getOrderId())
+                            .flatMap(itemInOrder ->
+                                    itemService.getItemById(itemInOrder.getItemId())
+                                            .map(item -> new ItemInOrderDto(
+                                                    itemInOrder.getItemInOrderId(),
+                                                    itemMapper.toItemDto(item, itemInOrder.getCount()),
+                                                    itemInOrder.getPrice(),
+                                                    itemInOrder.getCount())))
+                            .collect(Collectors.toSet())
+                            .map(itemsInOrderDto -> new OrderDto(
+                                    order.getOrderId(),
+                                    itemsInOrderDto,
+                                    order.getTotalSum()
+                            ));
+                });
+    }
 
-        for (ItemInCart itemInCart : cart.getItemsInCart()) {
-            ItemInOrder itemInOrder = itemMapper.toItemInOrder(itemInCart);
-            order.addItemInOrder(itemInOrder);
-        }
+    private Mono<ItemDto> getItemDto(Long itemId) {
+        Mono<Item> item = itemService.getItemById(itemId);
+        Mono<Integer> itemInCartCount = getItemInCartCount(itemId);
+        return Mono.zip(item, itemInCartCount)
+                .map(tuple -> itemMapper.toItemDto(tuple.getT1(), tuple.getT2()));
+    }
 
-        order.setTotalSum(cart.getTotal());
-
-        Order newOrder = orderService.save(order);
-
-        cartService.closeCart();
-        return newOrder.getOrderId();
+    private Mono<Cart> recalculateCartTotal(Cart cart) {
+        return itemInCartService.findAllByCartId(cart.getCartId())
+                .map(item -> item.getPrice()
+                        .multiply(BigDecimal.valueOf(item.getCount())))
+                .reduce(BigDecimal.ZERO, BigDecimal::add)
+                .flatMap(total -> {
+                    cart.setTotal(total);
+                    return cartService.save(cart);
+                });
     }
 
     private List<List<ItemDto>> splitByThree(List<ItemDto> items) {

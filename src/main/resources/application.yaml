@@ -2,23 +2,17 @@ spring:
   application:
     name: market
 
-  jpa:
-    hibernate:
-      ddl-auto: none
-    show-sql: true
-
   liquibase:
     enabled: true
     change-log: classpath:db/changelog/db.changelog-master.yaml
 
 logging:
   level:
-    root: INFO
+    root: debug
     org:
       zalando:
-        logbook: INFO
-    org.springframework: INFO
-    org.hibernate: INFO
-    ru.yandex.practicum.market: INFO
-    org.springframework.boot.autoconfigure.liquibase: INFO
-    liquibase: INFO
+        logbook: debug
+    org.springframework: debug
+    ru.yandex.practicum.market: debug
+    org.springframework.boot.autoconfigure.liquibase: info
+    liquibase: info

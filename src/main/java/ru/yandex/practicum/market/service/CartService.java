@@ -1,14 +1,15 @@
 package ru.yandex.practicum.market.service;
 
-import ru.yandex.practicum.market.dto.CartDto;
+import reactor.core.publisher.Mono;
 import ru.yandex.practicum.market.entity.Cart;
 
 public interface CartService {
 
-    CartDto getItemsInCart();
 
-    void closeCart();
+    Mono<Void> closeCart();
 
-    Cart getActiveCart();
+    Mono<Cart> getOrCreateActiveCart();
+
+    Mono<Cart> save(Cart cart);
 
 }
