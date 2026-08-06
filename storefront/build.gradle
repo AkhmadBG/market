@@ -2,10 +2,51 @@ plugins {
     id 'java'
     id 'org.springframework.boot'
     id 'io.spring.dependency-management'
+    id 'org.openapi.generator' version '7.14.0'
 }
 
 tasks.register('prepareKotlinBuildScriptModel') {
 
+}
+
+openApiGenerate {
+
+    generatorName = "java"
+
+    library = "webclient"
+
+    inputSpec = "$rootDir/openapi/payment-api.yaml"
+
+    outputDir = "$buildDir/generated"
+
+    apiPackage = "ru.project.storefront.client"
+
+    modelPackage = "ru.project.storefront.dto"
+
+    invokerPackage = "ru.project.storefront"
+
+    configOptions = [
+            useSpringBoot3 : "true",
+            dateLibrary    : "java8",
+            reactive            : "true",
+            interfaceOnly       : "true",
+            useJakartaEe        : "true",
+            useTags             : "true",
+            openApiNullable     : "false",
+            serializableModel   : "true"
+    ]
+}
+
+sourceSets {
+    main {
+        java {
+            srcDir("$buildDir/generated/src/main/java")
+        }
+    }
+}
+
+tasks.named("compileJava") {
+    dependsOn tasks.openApiGenerate
 }
 
 description = 'storefront'
@@ -16,6 +57,9 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'org.springframework.boot:spring-boot-starter-webflux'
+    implementation 'org.springdoc:springdoc-openapi-starter-webflux-ui:2.8.13'
+    implementation 'org.openapitools:jackson-databind-nullable:0.2.7'
+    implementation 'io.swagger.core.v3:swagger-annotations-jakarta:2.2.30'
     implementation 'org.springframework.boot:spring-boot-starter-jdbc' //для liquibase
     implementation 'org.liquibase:liquibase-core'
     runtimeOnly 'org.postgresql:postgresql' //для liquibase
