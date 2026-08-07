@@ -1,15 +1,30 @@
 package ru.project.storefront.dto;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
 import java.math.BigDecimal;
 import java.util.Set;
 
-public record CartDto(
+@Data
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
+public class CartDto{
 
-        Long cartId,
+    private Long cartId;
 
-        Set<ItemDto> items,
+    private Set<ItemDto> items;
 
-        BigDecimal total
+    private BigDecimal total;
 
-) {
+    private boolean canOrder;
+
+    private String paymentMessage;
+
+    public CartDto(Long cartId, Set<ItemDto> items, BigDecimal total) {
+
+    }
 }

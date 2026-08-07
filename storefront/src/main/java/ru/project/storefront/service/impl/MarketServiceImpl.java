@@ -8,14 +8,11 @@ import reactor.core.publisher.Mono;
 import ru.project.storefront.dto.*;
 import ru.project.storefront.entity.*;
 import ru.project.storefront.service.*;
-import ru.project.storefront.dto.*;
-import ru.project.storefront.entity.*;
 import ru.project.storefront.enums.Action;
 import ru.project.storefront.enums.CartStatus;
 import ru.project.storefront.enums.ItemSort;
 import ru.project.storefront.exception.OrderNotFoundException;
 import ru.project.storefront.mapper.ItemMapper;
-import ru.project.storefront.service.*;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -32,6 +29,7 @@ public class MarketServiceImpl implements MarketService {
     private final OrderService orderService;
     private final ItemInCartService itemInCartService;
     private final ItemInOrderService itemInOrderService;
+    private final PaymentClientService paymentClientService;
     private final ItemMapper itemMapper;
 
     @Override
@@ -45,7 +43,7 @@ public class MarketServiceImpl implements MarketService {
 
                     CartDto cartDto = tuple.getT2();
 
-                    Map<Long, Integer> counts = cartDto.items().stream()
+                    Map<Long, Integer> counts = cartDto.getItems().stream()
                             .collect(Collectors.toMap(
                                     ItemDto::itemId,
                                     ItemDto::count));
@@ -140,47 +138,53 @@ public class MarketServiceImpl implements MarketService {
                     Order order = Order.builder()
                             .totalSum(cart.getTotal())
                             .build();
-                    return orderService.save(order)
-                            .flatMap(savedOrder ->
-                                    itemInCartService.findAllByCartId(cart.getCartId())
-                                            .map(itemInCart -> new ItemInOrder(
-                                                    null,
-                                                    itemInCart.getItemId(),
-                                                    savedOrder.getOrderId(),
-                                                    itemInCart.getPrice(),
-                                                    itemInCart.getCount()
-                                            ))
-                                            .flatMap(itemInOrderService::save)
-                                            .flatMap(savedItemInOrder ->
-                                                    itemService.getItemById(savedItemInOrder.getItemId())
-                                                            .map(item -> {
-                                                                ItemDto itemDto = new ItemDto(
-                                                                        item.getItemId(),
-                                                                        item.getTitle(),
-                                                                        item.getDescription(),
-                                                                        item.getImgPath(),
-                                                                        item.getPrice(),
-                                                                        savedItemInOrder.getCount()
-                                                                );
-                                                                return new ItemInOrderDto(
-                                                                        savedItemInOrder.getItemInOrderId(),
-                                                                        itemDto,
-                                                                        savedItemInOrder.getPrice(),
-                                                                        savedItemInOrder.getCount()
-                                                                );
-                                                            })
-                                            )
-                                            .collect(Collectors.toSet())
-                                            .map(itemsInOrder -> new OrderDto(
-                                                    savedOrder.getOrderId(),
-                                                    itemsInOrder,
-                                                    savedOrder.getTotalSum()
-                                            ))
-                                            .flatMap(orderDto ->
-                                                    cartService.closeCart()
-                                                            .thenReturn(orderDto)
-                                            )
-                            );
+                    return paymentClientService.pay(cart.getTotal().doubleValue())
+                            .flatMap(response -> {
+                                if (!response.getSuccess()) {
+                                    return Mono.error(new IllegalStateException("Недостаточно средств"));
+                                }
+                                return orderService.save(order)
+                                        .flatMap(savedOrder ->
+                                                itemInCartService.findAllByCartId(cart.getCartId())
+                                                        .map(itemInCart -> new ItemInOrder(
+                                                                null,
+                                                                itemInCart.getItemId(),
+                                                                savedOrder.getOrderId(),
+                                                                itemInCart.getPrice(),
+                                                                itemInCart.getCount()
+                                                        ))
+                                                        .flatMap(itemInOrderService::save)
+                                                        .flatMap(savedItemInOrder ->
+                                                                itemService.getItemById(savedItemInOrder.getItemId())
+                                                                        .map(item -> {
+                                                                            ItemDto itemDto = new ItemDto(
+                                                                                    item.getItemId(),
+                                                                                    item.getTitle(),
+                                                                                    item.getDescription(),
+                                                                                    item.getImgPath(),
+                                                                                    item.getPrice(),
+                                                                                    savedItemInOrder.getCount()
+                                                                            );
+                                                                            return new ItemInOrderDto(
+                                                                                    savedItemInOrder.getItemInOrderId(),
+                                                                                    itemDto,
+                                                                                    savedItemInOrder.getPrice(),
+                                                                                    savedItemInOrder.getCount()
+                                                                            );
+                                                                        })
+                                                        )
+                                                        .collect(Collectors.toSet())
+                                                        .map(itemsInOrder -> new OrderDto(
+                                                                savedOrder.getOrderId(),
+                                                                itemsInOrder,
+                                                                savedOrder.getTotalSum()
+                                                        ))
+                                                        .flatMap(orderDto ->
+                                                                cartService.closeCart()
+                                                                        .thenReturn(orderDto)
+                                                        )
+                                        );
+                            });
                 });
     }
 
@@ -222,12 +226,39 @@ public class MarketServiceImpl implements MarketService {
     public Mono<CartDto> getActiveCartDto() {
         return cartService.getOrCreateActiveCart()
                 .flatMap(cart ->
-                        itemInCartService.findAllByCartId(cart.getCartId())
-                                .flatMap(itemInCart -> itemService.getItemById(itemInCart.getItemId())
-                                        .map(item -> itemMapper.toItemDto(item, itemInCart.getCount())))
-                                .collect(Collectors.toSet())
-                                .map(items -> new CartDto(cart.getCartId(), items, cart.getTotal()))
+                                itemInCartService.findAllByCartId(cart.getCartId())
+                                        .flatMap(itemInCart -> itemService.getItemById(itemInCart.getItemId())
+                                                .map(item -> itemMapper.toItemDto(item, itemInCart.getCount())))
+                                        .collect(Collectors.toSet())
+                                        .map(items -> {
+//                                    CartDto cartDto = new CartDto();
+//                                    new CartDto(cart.getCartId(), items, cart.getTotal());
+                                            return CartDto.builder()
+                                                    .cartId(cart.getCartId())
+                                                    .items(items)
+                                                    .total(cart.getTotal())
+//                                            .canOrder()
+//                                            .paymentMessage()
+                                                    .build();
+                                        })
+                                        .flatMap(this::addPaymentInfo)
                 );
+    }
+
+    private Mono<CartDto> addPaymentInfo(CartDto cartDto) {
+        return paymentClientService.getBalance()
+                .map(balance -> {
+                    cartDto.setCanOrder(balance.getBalance() >= Double.parseDouble(String.valueOf(cartDto.getTotal())));
+                    if (!cartDto.isCanOrder()) {
+                        cartDto.setPaymentMessage("Недостаточно средств");
+                    }
+                    return cartDto;
+                })
+                .onErrorResume(e -> {
+                    cartDto.setCanOrder(false);
+                    cartDto.setPaymentMessage("Сервис оплаты недоступен");
+                    return Mono.just(cartDto);
+                });
     }
 
     @Transactional(readOnly = true)

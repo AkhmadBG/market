@@ -20,8 +20,7 @@ public class CartViewController {
     public Mono<String> getItemsInCart(Model model) {
         return marketService.getActiveCartDto()
                 .map(cartDto -> {
-                    model.addAttribute("items", cartDto.items());
-                    model.addAttribute("total", cartDto.total());
+                    model.addAttribute("cartDto", cartDto);
                     return "cart";
                 });
     }
