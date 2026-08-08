@@ -3,6 +3,7 @@ package ru.project.storefront.mapper;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.ReportingPolicy;
+import ru.project.storefront.dto.CachedItem;
 import ru.project.storefront.dto.ItemDto;
 import ru.project.storefront.entity.Item;
 
@@ -11,5 +12,9 @@ public interface ItemMapper {
 
     @Mapping(target = "count", source = "itemInCartCount")
     ItemDto toItemDto(Item item, Integer itemInCartCount);
+
+    CachedItem toCachedItem(Item item);
+
+    Item toItem(CachedItem cachedItem);
 
 }

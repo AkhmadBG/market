@@ -52,6 +52,7 @@ dependencies {
     implementation 'org.springdoc:springdoc-openapi-starter-webflux-ui:2.8.13'
     implementation 'org.springframework.boot:spring-boot-starter-jdbc' //для liquibase
     implementation 'org.liquibase:liquibase-core'
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis-reactive'
     runtimeOnly 'org.postgresql:postgresql' //для liquibase
     runtimeOnly 'org.postgresql:r2dbc-postgresql'
     testCompileOnly 'org.projectlombok:lombok'

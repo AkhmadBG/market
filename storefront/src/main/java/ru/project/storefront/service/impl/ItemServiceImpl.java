@@ -1,12 +1,15 @@
 package ru.project.storefront.service.impl;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.redis.core.ReactiveRedisTemplate;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
+import ru.project.storefront.dto.CachedItem;
 import ru.project.storefront.dto.SearchResult;
 import ru.project.storefront.entity.Item;
 import ru.project.storefront.enums.ItemSort;
 import ru.project.storefront.exception.ItemNotFoundException;
+import ru.project.storefront.mapper.ItemMapper;
 import ru.project.storefront.repository.ItemRepository;
 import ru.project.storefront.service.ItemService;
 
@@ -17,12 +20,26 @@ import java.util.List;
 public class ItemServiceImpl implements ItemService {
 
     private final ItemRepository itemRepository;
+    private final ReactiveRedisTemplate<String, CachedItem> itemRedisTemplate;
+    private final ItemMapper itemMapper;
 
     @Override
     public Mono<Item> getItemById(Long itemId) {
-        return itemRepository.findById(itemId)
+        return itemRedisTemplate.opsForValue()
+                .get("item:" + itemId)
+                .map(itemMapper::toItem)
                 .switchIfEmpty(
-                        Mono.error(new ItemNotFoundException("Товар с id " + itemId + " не найден"))
+
+                        itemRepository.findById(itemId)
+                                .switchIfEmpty(
+                                        Mono.error(new ItemNotFoundException("Товар с id " + itemId + " не найден"))
+                                )
+                                .flatMap(item -> {
+                                    CachedItem cachedItem = itemMapper.toCachedItem(item);
+                                    return itemRedisTemplate.opsForValue()
+                                            .set("item:" + itemId, cachedItem)
+                                            .thenReturn(item);
+                                })
                 );
     }
 
