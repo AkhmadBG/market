@@ -60,14 +60,14 @@ public class ErrorHandler {
         );
     }
 
-//    @ExceptionHandler(Exception.class)
-//    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-//    public ApiError handleException(final Exception e) {
-//        return new ApiError(
-//                HttpStatus.INTERNAL_SERVER_ERROR,
-//                "Произошла ошибка",
-//                Arrays.toString(e.getStackTrace())
-//        );
-//    }
+    @ExceptionHandler(Exception.class)
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    public ApiError handleException(final Exception e) {
+        return new ApiError(
+                HttpStatus.INTERNAL_SERVER_ERROR,
+                "Произошла ошибка",
+                Arrays.toString(e.getStackTrace())
+        );
+    }
 
 }

@@ -12,7 +12,7 @@ import java.util.Set;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class CartDto{
+public class CartDto {
 
     private Long cartId;
 
@@ -24,7 +24,4 @@ public class CartDto{
 
     private String paymentMessage;
 
-    public CartDto(Long cartId, Set<ItemDto> items, BigDecimal total) {
-
-    }
 }
