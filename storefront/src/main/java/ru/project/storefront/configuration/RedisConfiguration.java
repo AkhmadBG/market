@@ -4,18 +4,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.data.redis.cache.RedisCacheConfiguration;
-import org.springframework.data.redis.cache.RedisCacheManager;
 import org.springframework.data.redis.connection.ReactiveRedisConnectionFactory;
-import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.ReactiveRedisTemplate;
 import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 import ru.project.storefront.dto.CachedItem;
-import ru.project.storefront.dto.SearchResult;
-
-import java.time.Duration;
+import ru.project.storefront.dto.CachedItems;
 
 @Configuration
 @EnableCaching
@@ -35,31 +30,22 @@ public class RedisConfiguration {
     }
 
     @Bean
-    public RedisCacheManager cacheManager(
-            RedisConnectionFactory connectionFactory,
+    public ReactiveRedisTemplate<String, CachedItems> cachedItemsRedisTemplate(
+            ReactiveRedisConnectionFactory connectionFactory,
             ObjectMapper objectMapper) {
 
-        Jackson2JsonRedisSerializer<SearchResult> valueSerializer =
-                new Jackson2JsonRedisSerializer<>(
-                        objectMapper,
-                        SearchResult.class
-                );
+        StringRedisSerializer keySerializer = new StringRedisSerializer();
 
-        RedisCacheConfiguration configuration =
-                RedisCacheConfiguration.defaultCacheConfig()
-                        .entryTtl(Duration.ofMinutes(5))
-                        .serializeKeysWith(
-                                RedisSerializationContext.SerializationPair
-                                        .fromSerializer(new StringRedisSerializer())
-                        )
-                        .serializeValuesWith(
-                                RedisSerializationContext.SerializationPair
-                                        .fromSerializer(valueSerializer)
-                        );
+        Jackson2JsonRedisSerializer<CachedItems> valueSerializer =
+                new Jackson2JsonRedisSerializer<>(objectMapper, CachedItems.class);
 
-        return RedisCacheManager.builder(connectionFactory)
-                .cacheDefaults(configuration)
-                .build();
+        RedisSerializationContext<String, CachedItems> context =
+                RedisSerializationContext
+                        .<String, CachedItems>newSerializationContext(keySerializer)
+                        .value(valueSerializer)
+                        .build();
+
+        return new ReactiveRedisTemplate<>(connectionFactory, context);
     }
 
 }

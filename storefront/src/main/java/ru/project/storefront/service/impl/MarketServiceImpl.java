@@ -248,7 +248,7 @@ public class MarketServiceImpl implements MarketService {
     private Mono<CartDto> addPaymentInfo(CartDto cartDto) {
         return paymentClientService.getBalance()
                 .map(balance -> {
-                    cartDto.setCanOrder(balance.getBalance() >= Double.parseDouble(String.valueOf(cartDto.getTotal())));
+                    cartDto.setCanOrder(balance.getBalance() >= cartDto.getTotal().doubleValue());
                     if (!cartDto.isCanOrder()) {
                         cartDto.setPaymentMessage("Недостаточно средств");
                     }
