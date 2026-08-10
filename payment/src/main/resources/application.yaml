@@ -1,0 +1,17 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: payment
+
+logging:
+  level:
+    root: debug
+    org:
+      zalando:
+        logbook: debug
+    org.springframework: debug
+    ru.yandex.practicum.market: debug
+    org.springframework.boot.autoconfigure.liquibase: info
+    liquibase: info

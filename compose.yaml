@@ -2,7 +2,7 @@ services:
 
   postgres:
     image: postgres:16.1
-    container_name: market
+    container_name: market_postgres_db
     restart: always
     environment:
       POSTGRES_DB: market
@@ -13,5 +13,30 @@ services:
     ports:
       - "5431:5432"
 
+  redis:
+    image: redis:7
+    container_name: market_redis_cache
+    restart: always
+    volumes:
+      - redis:/var/lib/redis/data
+    ports:
+      - "6379:6379"
+
+  payment:
+    build: ./payment
+    container_name: market_payment
+    ports:
+      - "8081:8081"
+
+  storefront:
+    build: ./storefront
+    container_name: market_storefront
+    depends_on:
+      - postgres
+      - redis
+    ports:
+      - "8080:8080"
+
 volumes:
   market:
+  redis:

@@ -1,0 +1,27 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: storefront
+  data:
+    redis:
+      host: localhost
+      port: 6379
+  liquibase:
+    enabled: true
+    change-log: classpath:db/changelog/db.changelog-master.yaml
+
+cache:
+  ttl: 5m
+
+logging:
+  level:
+    root: debug
+    org:
+      zalando:
+        logbook: debug
+    org.springframework: debug
+    ru.yandex.practicum.market: debug
+    org.springframework.boot.autoconfigure.liquibase: info
+    liquibase: info
