@@ -14,16 +14,19 @@ public class OrderServiceImpl implements OrderService {
 
     private final OrderRepository orderRepository;
 
-    public Flux<Order> getOrders() {
-        return orderRepository.findAll();
+    @Override
+    public Flux<Order> getOrdersByUserId(Long userId) {
+        return orderRepository.findAllByUserId(userId);
     }
 
+    @Override
     public Mono<Order> save(Order order) {
         return orderRepository.save(order);
     }
 
-    public Mono<Order> getOrderById(Long orderId) {
-        return orderRepository.findById(orderId);
+    @Override
+    public Mono<Order> getOrderByIdAndUserId(Long orderId, Long userId) {
+        return orderRepository.findByOrderIdAndUserId(orderId, userId);
     }
 
 }

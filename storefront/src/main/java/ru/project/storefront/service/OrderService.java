@@ -6,10 +6,10 @@ import ru.project.storefront.entity.Order;
 
 public interface OrderService {
 
-    Flux<Order> getOrders();
+    Flux<Order> getOrdersByUserId(Long userId);
 
     Mono<Order> save(Order order);
 
-    Mono<Order> getOrderById(Long orderId);
+    Mono<Order> getOrderByIdAndUserId(Long orderId, Long userId);
 
 }

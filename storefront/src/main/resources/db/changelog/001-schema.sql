@@ -19,8 +19,7 @@ CREATE TABLE IF NOT EXISTS carts (
     user_id BIGINT NOT NULL,
     total NUMERIC(10, 2) NOT NULL,
     cart_status VARCHAR(25) NOT NULL,
-    CONSTRAINT fk_carts_users FOREIGN KEY (user_id) REFERENCES users (user_id),
-    CONSTRAINT uq_carts_user UNIQUE (user_id)
+    CONSTRAINT fk_carts_users FOREIGN KEY (user_id) REFERENCES users (user_id)
 );
 
 CREATE TABLE IF NOT EXISTS orders (

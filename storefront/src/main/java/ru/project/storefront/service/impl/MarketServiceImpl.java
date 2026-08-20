@@ -57,11 +57,10 @@ public class MarketServiceImpl implements MarketService {
                                     (long) pageSize * pageNumber < result.total()
                             ));
                 });
-
     }
 
     @Override
-    public Mono<ItemsPageDto> getItemsForAuthenticationUser(String search, ItemSort itemSort, int pageNumber, int pageSize) {
+    public Mono<ItemsPageDto> getItemsForAuthenticatedUser(String search, ItemSort itemSort, int pageNumber, int pageSize) {
         Mono<SearchResult> items = itemService.search(search, itemSort, pageNumber, pageSize);
         Mono<CartDto> cart = getActiveCartDto();
         return Mono.zip(items, cart)
@@ -97,11 +96,6 @@ public class MarketServiceImpl implements MarketService {
                             ));
                 });
 
-    }
-
-    @Override
-    public Mono<ItemDto> getItemDtoById(Long itemId) {
-        return getItemDto(itemId);
     }
 
     @Override
@@ -170,6 +164,7 @@ public class MarketServiceImpl implements MarketService {
                         cartService.getOrCreateActiveCart(user.getUserId())
                                 .flatMap(cart -> {
                                     Order order = Order.builder()
+                                            .userId(user.getUserId())
                                             .totalSum(cart.getTotal())
                                             .build();
                                     return paymentClientService.pay(cart.getTotal().doubleValue())
@@ -225,35 +220,37 @@ public class MarketServiceImpl implements MarketService {
     @Transactional(readOnly = true)
     @Override
     public Mono<OrderDto> getOrderById(Long orderId) {
-        return orderService.getOrderById(orderId)
-                .flatMap(order -> {
-                    return itemInOrderService.getItemInOrderByOrderId(order.getOrderId())
-                            .flatMap(itemInOrder -> {
-                                return itemService.getItemById(itemInOrder.getItemId())
-                                        .map(item -> {
-                                            ItemDto itemDto = new ItemDto(
-                                                    item.getItemId(),
-                                                    item.getTitle(),
-                                                    item.getDescription(),
-                                                    item.getImgPath(),
-                                                    item.getPrice(),
-                                                    itemInOrder.getCount()
-                                            );
-                                            return new ItemInOrderDto(
-                                                    itemInOrder.getItemInOrderId(),
-                                                    itemDto,
-                                                    itemInOrder.getPrice(),
-                                                    itemInOrder.getCount()
-                                            );
-                                        });
-                            }).collect(Collectors.toSet())
-                            .map(itemsInOrder -> new OrderDto(
-                                    order.getOrderId(),
-                                    itemsInOrder,
-                                    order.getTotalSum()
-                            ));
-                })
-                .switchIfEmpty(Mono.error(new OrderNotFoundException("Заказ с id = " + orderId + " не найден")));
+        return userService.getCurrentUser()
+                .flatMap(user ->
+                        orderService.getOrderByIdAndUserId(orderId, user.getUserId())
+                                .flatMap(order -> {
+                                    return itemInOrderService.getItemInOrderByOrderId(order.getOrderId())
+                                            .flatMap(itemInOrder -> {
+                                                return itemService.getItemById(itemInOrder.getItemId())
+                                                        .map(item -> {
+                                                            ItemDto itemDto = new ItemDto(
+                                                                    item.getItemId(),
+                                                                    item.getTitle(),
+                                                                    item.getDescription(),
+                                                                    item.getImgPath(),
+                                                                    item.getPrice(),
+                                                                    itemInOrder.getCount()
+                                                            );
+                                                            return new ItemInOrderDto(
+                                                                    itemInOrder.getItemInOrderId(),
+                                                                    itemDto,
+                                                                    itemInOrder.getPrice(),
+                                                                    itemInOrder.getCount()
+                                                            );
+                                                        });
+                                            }).collect(Collectors.toSet())
+                                            .map(itemsInOrder -> new OrderDto(
+                                                    order.getOrderId(),
+                                                    itemsInOrder,
+                                                    order.getTotalSum()
+                                            ));
+                                })
+                                .switchIfEmpty(Mono.error(new OrderNotFoundException("Заказ с id = " + orderId + " не найден"))));
     }
 
     @Override
@@ -296,23 +293,25 @@ public class MarketServiceImpl implements MarketService {
     @Transactional(readOnly = true)
     @Override
     public Flux<OrderDto> getOrders() {
-        return orderService.getOrders()
-                .flatMap(order -> {
-                    return itemInOrderService.getItemInOrderByOrderId(order.getOrderId())
-                            .flatMap(itemInOrder ->
-                                    itemService.getItemById(itemInOrder.getItemId())
-                                            .map(item -> new ItemInOrderDto(
-                                                    itemInOrder.getItemInOrderId(),
-                                                    itemMapper.toItemDto(item, itemInOrder.getCount()),
-                                                    itemInOrder.getPrice(),
-                                                    itemInOrder.getCount())))
-                            .collect(Collectors.toSet())
-                            .map(itemsInOrderDto -> new OrderDto(
-                                    order.getOrderId(),
-                                    itemsInOrderDto,
-                                    order.getTotalSum()
-                            ));
-                });
+        return userService.getCurrentUser()
+                .flatMapMany(user ->
+                        orderService.getOrdersByUserId(user.getUserId())
+                                .flatMap(order -> {
+                                    return itemInOrderService.getItemInOrderByOrderId(order.getOrderId())
+                                            .flatMap(itemInOrder ->
+                                                    itemService.getItemById(itemInOrder.getItemId())
+                                                            .map(item -> new ItemInOrderDto(
+                                                                    itemInOrder.getItemInOrderId(),
+                                                                    itemMapper.toItemDto(item, itemInOrder.getCount()),
+                                                                    itemInOrder.getPrice(),
+                                                                    itemInOrder.getCount())))
+                                            .collect(Collectors.toSet())
+                                            .map(itemsInOrderDto -> new OrderDto(
+                                                    order.getOrderId(),
+                                                    itemsInOrderDto,
+                                                    order.getTotalSum()
+                                            ));
+                                }));
     }
 
     private Mono<ItemDto> getItemDto(Long itemId) {
@@ -320,6 +319,17 @@ public class MarketServiceImpl implements MarketService {
         Mono<Integer> itemInCartCount = getItemInCartCount(itemId);
         return Mono.zip(item, itemInCartCount)
                 .map(tuple -> itemMapper.toItemDto(tuple.getT1(), tuple.getT2()));
+    }
+
+    @Override
+    public Mono<ItemDto> getItemDtoById(Long itemId) {
+        return itemService.getItemById(itemId)
+                .map(item -> itemMapper.toItemDto(item, 0));
+    }
+
+    @Override
+    public Mono<ItemDto> getAuthenticatedItemDtoById(Long itemId) {
+        return getItemDto(itemId);
     }
 
     private Mono<Cart> recalculateCartTotal(Cart cart) {

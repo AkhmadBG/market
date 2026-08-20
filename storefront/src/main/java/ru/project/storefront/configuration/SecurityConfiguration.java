@@ -3,6 +3,7 @@ package ru.project.storefront.configuration;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
@@ -22,11 +23,15 @@ public class SecurityConfiguration {
     public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http) {
         return http
                 .authorizeExchange(exchange -> exchange
-                        .pathMatchers(
-                                "/",
-                                "/items/**",
-                                "/images/**"
-                        ).permitAll()
+                        .pathMatchers(HttpMethod.GET, "/", "/items", "/items/**", "/static/images/**")
+                        .permitAll()
+
+                        .pathMatchers(HttpMethod.POST, "/items", "/items/**", "/buy")
+                        .authenticated()
+
+                        .pathMatchers("/cart/**", "/orders/**", "/order")
+                        .authenticated()
+
                         .anyExchange().authenticated()
                 )
                 .formLogin(Customizer.withDefaults())

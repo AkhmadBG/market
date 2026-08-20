@@ -13,9 +13,11 @@ public interface MarketService {
 
     Mono<ItemsPageDto> getItems(String search, ItemSort itemSort, int pageNumber, int pageSize);
 
-    Mono<ItemsPageDto> getItemsForAuthenticationUser(String search, ItemSort itemSort, int pageNumber, int pageSize);
+    Mono<ItemsPageDto> getItemsForAuthenticatedUser(String search, ItemSort itemSort, int pageNumber, int pageSize);
 
     Mono<ItemDto> getItemDtoById(Long itemId);
+
+    Mono<ItemDto> getAuthenticatedItemDtoById(Long itemId);
 
     Mono<Integer> getItemInCartCount(Long itemId);
 
