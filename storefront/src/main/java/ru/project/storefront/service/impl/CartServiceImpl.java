@@ -19,8 +19,8 @@ public class CartServiceImpl implements CartService {
 
     @Transactional
     @Override
-    public Mono<Void> closeCart() {
-        return getOrCreateActiveCart()
+    public Mono<Void> closeCart(Long userId) {
+        return getOrCreateActiveCart(userId)
                 .flatMap(cart -> {
                     cart.setCartStatus(CartStatus.CLOSED);
                     return cartRepository.save(cart);
@@ -29,11 +29,12 @@ public class CartServiceImpl implements CartService {
 
     @Transactional
     @Override
-    public Mono<Cart> getOrCreateActiveCart() {
-        return cartRepository.findByCartStatus(CartStatus.ACTIVE)
+    public Mono<Cart> getOrCreateActiveCart(Long userId) {
+        return cartRepository.findByUserIdAndCartStatus(userId, CartStatus.ACTIVE)
                 .switchIfEmpty(
                         cartRepository.save(
                                 Cart.builder()
+                                        .userId(userId)
                                         .total(BigDecimal.ZERO)
                                         .cartStatus(CartStatus.ACTIVE)
                                         .build()

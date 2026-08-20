@@ -4,6 +4,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.annotation.Validated;
@@ -32,9 +33,10 @@ public class ItemViewController {
                                  @RequestParam(defaultValue = "NO") ItemSort itemSort,
                                  @RequestParam(defaultValue = "1") @Min(1) int pageNumber,
                                  @RequestParam(defaultValue = "5") @Min(1) @Max(100) int pageSize,
+                                 Authentication authentication,
                                  Model model) {
 
-        return marketService.getItems(search, itemSort, pageNumber, pageSize)
+        return marketService.getItems(authentication.getName(), search, itemSort, pageNumber, pageSize)
                 .map(itemsPageDto -> {
                     model.addAttribute("items", itemsPageDto.items());
                     model.addAttribute("paging", itemsPageDto.paging());

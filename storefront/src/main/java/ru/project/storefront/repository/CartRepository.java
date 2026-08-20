@@ -9,6 +9,6 @@ import ru.project.storefront.enums.CartStatus;
 @Repository
 public interface CartRepository extends ReactiveCrudRepository<Cart, Long> {
 
-    Mono<Cart> findByCartStatus(CartStatus cartStatus);
+    Mono<Cart> findByUserIdAndCartStatus(Long userId, CartStatus cartStatus);
 
 }

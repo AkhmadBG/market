@@ -25,6 +25,7 @@ import java.util.stream.Collectors;
 public class MarketServiceImpl implements MarketService {
 
     private final ItemService itemService;
+    private final UserService userService;
     private final CartService cartService;
     private final OrderService orderService;
     private final ItemInCartService itemInCartService;
@@ -35,7 +36,7 @@ public class MarketServiceImpl implements MarketService {
     @Override
     public Mono<ItemsPageDto> getItems(String search, ItemSort itemSort, int pageNumber, int pageSize) {
         Mono<SearchResult> items = itemService.search(search, itemSort, pageNumber, pageSize);
-        Mono<CartDto> cart = getActiveCartDto();
+        Mono<CartDto> cart = getActiveCartDto(userId);
         return Mono.zip(items, cart)
                 .map(tuple -> {
 
@@ -78,7 +79,7 @@ public class MarketServiceImpl implements MarketService {
 
     @Override
     public Mono<Integer> getItemInCartCount(Long itemId) {
-        Mono<ItemInCart> itemInCart = itemInCartService.findByCartStatusAndItemId(CartStatus.ACTIVE, itemId);
+        Mono<ItemInCart> itemInCart = itemInCartService.findByUserIdAndCartStatusAndItemId(CartStatus.ACTIVE, itemId);
         return itemInCart
                 .map(ItemInCart::getCount)
                 .defaultIfEmpty(0);
@@ -224,24 +225,22 @@ public class MarketServiceImpl implements MarketService {
 
     @Override
     public Mono<CartDto> getActiveCartDto() {
-        return cartService.getOrCreateActiveCart()
+        return userService.getCurrentUser()
+                .flatMap(user ->
+                        cartService.getOrCreateActiveCart(user.getUserId()))
                 .flatMap(cart ->
-                                itemInCartService.findAllByCartId(cart.getCartId())
-                                        .flatMap(itemInCart -> itemService.getItemById(itemInCart.getItemId())
-                                                .map(item -> itemMapper.toItemDto(item, itemInCart.getCount())))
-                                        .collect(Collectors.toSet())
-                                        .map(items -> {
-//                                    CartDto cartDto = new CartDto();
-//                                    new CartDto(cart.getCartId(), items, cart.getTotal());
-                                            return CartDto.builder()
-                                                    .cartId(cart.getCartId())
-                                                    .items(items)
-                                                    .total(cart.getTotal())
-//                                            .canOrder()
-//                                            .paymentMessage()
-                                                    .build();
-                                        })
-                                        .flatMap(this::addPaymentInfo)
+                        itemInCartService.findAllByCartId(cart.getCartId())
+                                .flatMap(itemInCart -> itemService.getItemById(itemInCart.getItemId())
+                                        .map(item -> itemMapper.toItemDto(item, itemInCart.getCount())))
+                                .collect(Collectors.toSet())
+                                .map(items -> {
+                                    return CartDto.builder()
+                                            .cartId(cart.getCartId())
+                                            .items(items)
+                                            .total(cart.getTotal())
+                                            .build();
+                                })
+                                .flatMap(this::addPaymentInfo)
                 );
     }
 
