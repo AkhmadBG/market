@@ -35,15 +35,25 @@ public class ItemViewController {
                                  @RequestParam(defaultValue = "5") @Min(1) @Max(100) int pageSize,
                                  Authentication authentication,
                                  Model model) {
-
-        return marketService.getItems(authentication.getName(), search, itemSort, pageNumber, pageSize)
-                .map(itemsPageDto -> {
-                    model.addAttribute("items", itemsPageDto.items());
-                    model.addAttribute("paging", itemsPageDto.paging());
-                    model.addAttribute("search", search);
-                    model.addAttribute("itemSort", itemSort);
-                    return "items";
-                });
+        if (authentication != null & authentication.isAuthenticated()) {
+            return marketService.getItemsForAuthenticationUser(search, itemSort, pageNumber, pageSize)
+                    .map(itemsPageDto -> {
+                        model.addAttribute("items", itemsPageDto.items());
+                        model.addAttribute("paging", itemsPageDto.paging());
+                        model.addAttribute("search", search);
+                        model.addAttribute("itemSort", itemSort);
+                        return "items";
+                    });
+        } else {
+            return marketService.getItems(search, itemSort, pageNumber, pageSize)
+                    .map(itemsPageDto -> {
+                        model.addAttribute("items", itemsPageDto.items());
+                        model.addAttribute("paging", itemsPageDto.paging());
+                        model.addAttribute("search", search);
+                        model.addAttribute("itemSort", itemSort);
+                        return "items";
+                    });
+        }
     }
 
     @PostMapping("/items")
