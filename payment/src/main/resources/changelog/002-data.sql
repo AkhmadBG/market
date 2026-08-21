@@ -1,0 +1,11 @@
+INSERT INTO accounts (user_id, balance)
+VALUES (1, 5000.00) ON CONFLICT DO NOTHING;
+
+INSERT INTO accounts (user_id, balance)
+VALUES (2, 10000.00) ON CONFLICT DO NOTHING;
+
+INSERT INTO accounts (user_id, balance)
+VALUES (3, 15000.00) ON CONFLICT DO NOTHING;
+
+INSERT INTO accounts (user_id, balance)
+VALUES (4, 20000.00) ON CONFLICT DO NOTHING;
