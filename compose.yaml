@@ -35,6 +35,12 @@ services:
     ports:
       - "6379:6379"
 
+  authorization-server:
+    build: ./authorization-server
+    container_name: market_authorization_server
+    ports:
+      - "8082:8082"
+
   payment:
     build: ./payment
     container_name: market_payment
