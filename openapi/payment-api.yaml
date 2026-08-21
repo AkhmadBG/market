@@ -1,3 +1,92 @@
+#openapi: 3.0.3
+#
+#info:
+#  title: Payment Service API
+#  description: REST API сервиса платежей интернет-магазина
+#  version: 1.0.0
+#
+#servers:
+#  - url: http://localhost:8081
+#    description: Local server
+#
+#tags:
+#  - name: Payment
+#    description: Операции с балансом и оплатой
+#
+#paths:
+#  /api/payments/balance:
+#    get:
+#      tags:
+#        - Payment
+#      summary: Получить баланс
+#      operationId: getBalance
+#      responses:
+#        "200":
+#          description: Баланс успешно получен
+#          content:
+#            application/json:
+#              schema:
+#                $ref: "#/components/schemas/BalanceResponse"
+#
+#  /api/payments/pay:
+#    post:
+#      tags:
+#        - Payment
+#      summary: Выполнить оплату
+#      operationId: pay
+#      requestBody:
+#        required: true
+#        content:
+#          application/json:
+#            schema:
+#              $ref: "#/components/schemas/PaymentRequest"
+#      responses:
+#        "200":
+#          description: Результат оплаты
+#          content:
+#            application/json:
+#              schema:
+#                $ref: "#/components/schemas/PaymentResponse"
+#
+#components:
+#  schemas:
+#
+#    BalanceResponse:
+#      type: object
+#      required:
+#        - balance
+#      properties:
+#        balance:
+#          type: number
+#          format: double
+#          example: 15000.00
+#
+#    PaymentRequest:
+#      type: object
+#      required:
+#        - amount
+#      properties:
+#        amount:
+#          type: number
+#          format: double
+#          minimum: 0
+#          example: 2500.00
+#
+#    PaymentResponse:
+#      type: object
+#      required:
+#        - success
+#        - balance
+#      properties:
+#        success:
+#          type: boolean
+#          example: true
+#        balance:
+#          type: number
+#          format: double
+#          example: 12500.00
+
+
 openapi: 3.0.3
 
 info:
@@ -20,6 +109,13 @@ paths:
         - Payment
       summary: Получить баланс
       operationId: getBalance
+      parameters:
+        - name: userId
+          in: query
+          required: true
+          schema:
+            type: integer
+            format: int64
       responses:
         "200":
           description: Баланс успешно получен
@@ -64,8 +160,12 @@ components:
     PaymentRequest:
       type: object
       required:
+        - userId
         - amount
       properties:
+        userId:
+          type: integer
+          format: int64
         amount:
           type: number
           format: double
