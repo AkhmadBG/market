@@ -1,13 +1,14 @@
 package ru.project.payment.service;
 
+import reactor.core.publisher.Mono;
 import ru.project.payment.dto.BalanceResponse;
 import ru.project.payment.dto.PaymentRequest;
 import ru.project.payment.dto.PaymentResponse;
 
 public interface PaymentService {
 
-    BalanceResponse getBalance();
+    Mono<BalanceResponse> getBalance(Long userId);
 
-    PaymentResponse pay(PaymentRequest request);
+    Mono<PaymentResponse> pay(PaymentRequest request);
 
 }

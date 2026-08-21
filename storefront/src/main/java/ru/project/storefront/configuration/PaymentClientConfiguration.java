@@ -23,37 +23,27 @@ public class PaymentClientConfiguration {
     public ReactiveOAuth2AuthorizedClientManager authorizedClientManager(
             ReactiveClientRegistrationRepository clientRegistrationRepository) {
 
-        var authorizedClientService =
-                new InMemoryReactiveOAuth2AuthorizedClientService(
-                        clientRegistrationRepository
-                );
+        var authorizedClientService = new InMemoryReactiveOAuth2AuthorizedClientService(clientRegistrationRepository);
 
-        var authorizedClientManager =
-                new AuthorizedClientServiceReactiveOAuth2AuthorizedClientManager(
-                        clientRegistrationRepository,
-                        authorizedClientService
-                );
+        var authorizedClientManager = new AuthorizedClientServiceReactiveOAuth2AuthorizedClientManager(
+                clientRegistrationRepository,
+                authorizedClientService
+        );
 
         var authorizedClientProvider =
                 ReactiveOAuth2AuthorizedClientProviderBuilder.builder()
                         .clientCredentials()
                         .build();
 
-        authorizedClientManager.setAuthorizedClientProvider(
-                authorizedClientProvider
-        );
+        authorizedClientManager.setAuthorizedClientProvider(authorizedClientProvider);
 
         return authorizedClientManager;
     }
 
     @Bean
-    public ApiClient apiClient(
-            ReactiveOAuth2AuthorizedClientManager authorizedClientManager) {
+    public ApiClient apiClient(ReactiveOAuth2AuthorizedClientManager authorizedClientManager) {
 
-        var oauth2 =
-                new ServerOAuth2AuthorizedClientExchangeFilterFunction(
-                        authorizedClientManager
-                );
+        var oauth2 = new ServerOAuth2AuthorizedClientExchangeFilterFunction(authorizedClientManager);
 
         oauth2.setDefaultClientRegistrationId("payment");
 

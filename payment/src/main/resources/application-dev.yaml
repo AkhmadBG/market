@@ -1,14 +1,14 @@
 spring:
 
   r2dbc:
-    url: r2dbc:postgresql://localhost:5432/payment
+    url: r2dbc:postgresql://localhost:5430/payment
     username: payment
     password: payment
 
   liquibase:
     enabled: true
     change-log: classpath:db/changelog/db.changelog-master.yaml
-    url: jdbc:postgresql://localhost:5432/payment
+    url: jdbc:postgresql://localhost:5430/payment
     user: payment
     password: payment
     driver-class-name: org.postgresql.Driver

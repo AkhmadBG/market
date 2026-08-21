@@ -11,7 +11,7 @@ services:
     volumes:
       - payment:/var/lib/postgresql/data
     ports:
-      - "5432:5432"
+      - "5430:5432"
 
   postgres-market:
     image: postgres:16.1
@@ -38,6 +38,8 @@ services:
   payment:
     build: ./payment
     container_name: market_payment
+    depends_on:
+      - postgres-payment
     ports:
       - "8081:8081"
 
@@ -45,7 +47,7 @@ services:
     build: ./storefront
     container_name: market_storefront
     depends_on:
-      - postgres
+      - postgres-market
       - redis
     ports:
       - "8080:8080"

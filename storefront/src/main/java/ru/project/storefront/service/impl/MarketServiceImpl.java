@@ -167,7 +167,7 @@ public class MarketServiceImpl implements MarketService {
                                             .userId(user.getUserId())
                                             .totalSum(cart.getTotal())
                                             .build();
-                                    return paymentClientService.pay(cart.getTotal().doubleValue())
+                                    return paymentClientService.pay(user.getUserId(), cart.getTotal().doubleValue())
                                             .flatMap(response -> {
                                                 if (!response.getSuccess()) {
                                                     return Mono.error(new IllegalStateException("Недостаточно средств"));
@@ -275,19 +275,21 @@ public class MarketServiceImpl implements MarketService {
     }
 
     private Mono<CartDto> addPaymentInfo(CartDto cartDto) {
-        return paymentClientService.getBalance()
-                .map(balance -> {
-                    cartDto.setCanOrder(balance.getBalance() >= cartDto.getTotal().doubleValue());
-                    if (!cartDto.isCanOrder()) {
-                        cartDto.setPaymentMessage("Недостаточно средств");
-                    }
-                    return cartDto;
-                })
-                .onErrorResume(e -> {
-                    cartDto.setCanOrder(false);
-                    cartDto.setPaymentMessage("Сервис оплаты недоступен");
-                    return Mono.just(cartDto);
-                });
+        return userService.getCurrentUser()
+                .flatMap(user ->
+                        paymentClientService.getBalance(user.getUserId())
+                                .map(balance -> {
+                                    cartDto.setCanOrder(balance.getBalance() >= cartDto.getTotal().doubleValue());
+                                    if (!cartDto.isCanOrder()) {
+                                        cartDto.setPaymentMessage("Недостаточно средств");
+                                    }
+                                    return cartDto;
+                                })
+                                .onErrorResume(e -> {
+                                    cartDto.setCanOrder(false);
+                                    cartDto.setPaymentMessage("Сервис оплаты недоступен");
+                                    return Mono.just(cartDto);
+                                }));
     }
 
     @Transactional(readOnly = true)
