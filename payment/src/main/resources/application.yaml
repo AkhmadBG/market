@@ -4,6 +4,12 @@ server:
 spring:
   application:
     name: payment
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8082
+
 
 logging:
   level:
