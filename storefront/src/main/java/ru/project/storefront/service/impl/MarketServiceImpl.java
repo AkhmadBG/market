@@ -325,14 +325,31 @@ public class MarketServiceImpl implements MarketService {
 
     @Override
     public Mono<ItemDto> getItemDtoById(Long itemId) {
-        return itemService.getItemById(itemId)
-                .map(item -> itemMapper.toItemDto(item, 0));
+        return userService.getCurrentUser()
+                .flatMap(user ->
+                        cartService.getOrCreateActiveCart(user.getUserId())
+                                .flatMap(cart ->
+                                        itemService.getItemById(itemId)
+                                                .flatMap(item ->
+                                                        itemInCartService
+                                                                .findByCartIdAndItemId(cart.getCartId(), itemId)
+                                                                .map(itemInCart ->
+                                                                        itemMapper.toItemDto(item, itemInCart.getCount()))
+                                                                .defaultIfEmpty(
+                                                                        itemMapper.toItemDto(item, 0))
+                                                )
+                                )
+                )
+                .switchIfEmpty(
+                        itemService.getItemById(itemId)
+                                .map(item -> itemMapper.toItemDto(item, 0))
+                );
     }
 
-    @Override
-    public Mono<ItemDto> getAuthenticatedItemDtoById(Long itemId) {
-        return getItemDto(itemId);
-    }
+//    @Override
+//    public Mono<ItemDto> getAuthenticatedItemDtoById(Long itemId) {
+//        return getItemDto(itemId);
+//    }
 
     private Mono<Cart> recalculateCartTotal(Cart cart) {
         return itemInCartService.findAllByCartId(cart.getCartId())

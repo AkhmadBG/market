@@ -13,6 +13,7 @@ public interface ItemMapper {
     @Mapping(target = "count", source = "itemInCartCount")
     ItemDto toItemDto(Item item, Integer itemInCartCount);
 
+    @Mapping(target = "count", ignore = true)
     CachedItem toCachedItem(Item item);
 
     Item toItem(CachedItem cachedItem);

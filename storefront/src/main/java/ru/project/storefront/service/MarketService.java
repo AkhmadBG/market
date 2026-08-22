@@ -17,7 +17,7 @@ public interface MarketService {
 
     Mono<ItemDto> getItemDtoById(Long itemId);
 
-    Mono<ItemDto> getAuthenticatedItemDtoById(Long itemId);
+//    Mono<ItemDto> getAuthenticatedItemDtoById(Long itemId);
 
     Mono<Integer> getItemInCartCount(Long itemId);
 

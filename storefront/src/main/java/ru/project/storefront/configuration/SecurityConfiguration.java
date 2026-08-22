@@ -23,7 +23,7 @@ public class SecurityConfiguration {
     public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http) {
         return http
                 .authorizeExchange(exchange -> exchange
-                        .pathMatchers(HttpMethod.GET, "/", "/items", "/items/**", "/static/images/**")
+                        .pathMatchers(HttpMethod.GET, "/", "/items", "/items/**", "/images/**")
                         .permitAll()
 
                         .pathMatchers(HttpMethod.POST, "/items", "/items/**", "/buy")
