@@ -13,6 +13,7 @@ import ru.project.storefront.entity.Item;
 import ru.project.storefront.enums.ItemSort;
 import ru.project.storefront.exception.ItemNotFoundException;
 import ru.project.storefront.mapper.ItemMapper;
+import ru.project.storefront.repository.ItemInCartRepository;
 import ru.project.storefront.repository.ItemRepository;
 import ru.project.storefront.service.ItemService;
 
@@ -138,6 +139,7 @@ public class ItemServiceImpl implements ItemService {
                                 item.getItemId(),
                                 item.getTitle(),
                                 item.getDescription(),
+                                item.getImgPath(),
                                 item.getPrice()
                         ))
                         .toList(),
@@ -158,6 +160,7 @@ public class ItemServiceImpl implements ItemService {
                         .itemId(item.itemId())
                         .title(item.title())
                         .description(item.description())
+                        .imgPath(item.imgPath())
                         .price(item.price())
                         .build())
                 .toList();

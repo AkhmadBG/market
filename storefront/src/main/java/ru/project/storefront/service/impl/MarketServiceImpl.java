@@ -7,12 +7,12 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import ru.project.storefront.dto.*;
 import ru.project.storefront.entity.*;
-import ru.project.storefront.service.*;
 import ru.project.storefront.enums.Action;
 import ru.project.storefront.enums.CartStatus;
 import ru.project.storefront.enums.ItemSort;
 import ru.project.storefront.exception.OrderNotFoundException;
 import ru.project.storefront.mapper.ItemMapper;
+import ru.project.storefront.service.*;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -25,6 +25,7 @@ import java.util.stream.Collectors;
 public class MarketServiceImpl implements MarketService {
 
     private final ItemService itemService;
+    private final UserService userService;
     private final CartService cartService;
     private final OrderService orderService;
     private final ItemInCartService itemInCartService;
@@ -34,6 +35,32 @@ public class MarketServiceImpl implements MarketService {
 
     @Override
     public Mono<ItemsPageDto> getItems(String search, ItemSort itemSort, int pageNumber, int pageSize) {
+        return itemService.search(search, itemSort, pageNumber, pageSize)
+                .map(result -> {
+                    List<ItemDto> itemsDto = result.items().stream()
+                            .map(item -> new ItemDto(
+                                    item.getItemId(),
+                                    item.getTitle(),
+                                    item.getDescription(),
+                                    item.getImgPath(),
+                                    item.getPrice(),
+                                    0
+                            ))
+                            .toList();
+
+                    return new ItemsPageDto(
+                            splitByThree(itemsDto),
+                            new PagingDto(
+                                    pageNumber,
+                                    pageSize,
+                                    pageNumber > 1,
+                                    (long) pageSize * pageNumber < result.total()
+                            ));
+                });
+    }
+
+    @Override
+    public Mono<ItemsPageDto> getItemsForAuthenticatedUser(String search, ItemSort itemSort, int pageNumber, int pageSize) {
         Mono<SearchResult> items = itemService.search(search, itemSort, pageNumber, pageSize);
         Mono<CartDto> cart = getActiveCartDto();
         return Mono.zip(items, cart)
@@ -72,215 +99,221 @@ public class MarketServiceImpl implements MarketService {
     }
 
     @Override
-    public Mono<ItemDto> getItemDtoById(Long itemId) {
-        return getItemDto(itemId);
-    }
-
-    @Override
     public Mono<Integer> getItemInCartCount(Long itemId) {
-        Mono<ItemInCart> itemInCart = itemInCartService.findByCartStatusAndItemId(CartStatus.ACTIVE, itemId);
-        return itemInCart
-                .map(ItemInCart::getCount)
-                .defaultIfEmpty(0);
+        return userService.getCurrentUser()
+                .flatMap(user ->
+                        itemInCartService.findByUserIdAndCartStatusAndItemId(user.getUserId(), CartStatus.ACTIVE, itemId)
+                                .map(ItemInCart::getCount)
+                                .defaultIfEmpty(0));
     }
 
     @Transactional
     @Override
     public Mono<ItemDto> changeItemQuantityInCart(Long itemId, Action action) {
-        return cartService.getOrCreateActiveCart()
-                .flatMap(cart -> itemInCartService.findByCartIdAndItemId(cart.getCartId(), itemId)
-                        .flatMap(itemInCart -> {
-                            Mono<?> operation;
-                            switch (action) {
-                                case PLUS -> {
-                                    itemInCart.setCount(itemInCart.getCount() + 1);
-                                    operation = itemInCartService.save(itemInCart);
-                                }
-                                case MINUS -> {
-                                    if (itemInCart.getCount() == 1) {
-                                        operation = itemInCartService.delete(itemInCart.getItemInCartId());
-                                    } else {
-                                        itemInCart.setCount(itemInCart.getCount() - 1);
-                                        operation = itemInCartService.save(itemInCart);
-                                    }
-                                }
-                                case DELETE -> operation = itemInCartService.delete(itemInCart.getItemInCartId());
-                                default ->
-                                        operation = Mono.error(new IllegalStateException("Неизвестное действие: " + action));
-                            }
-                            return operation.then(recalculateCartTotal(cart));
-                        })
-                        .switchIfEmpty(
-                                action == Action.PLUS
-                                        ? itemService.getItemById(itemId)
-                                        .flatMap(item ->
-                                                itemInCartService.save(
-                                                        ItemInCart.builder()
-                                                                .cartId(cart.getCartId())
-                                                                .itemId(item.getItemId())
-                                                                .price(item.getPrice())
-                                                                .count(1)
-                                                                .build()
-                                                )
+        return userService.getCurrentUser()
+                .flatMap(user ->
+                        cartService.getOrCreateActiveCart(user.getUserId())
+                                .flatMap(cart -> itemInCartService.findByCartIdAndItemId(cart.getCartId(), itemId)
+                                        .flatMap(itemInCart -> {
+                                            Mono<?> operation;
+                                            switch (action) {
+                                                case PLUS -> {
+                                                    itemInCart.setCount(itemInCart.getCount() + 1);
+                                                    operation = itemInCartService.save(itemInCart);
+                                                }
+                                                case MINUS -> {
+                                                    if (itemInCart.getCount() == 1) {
+                                                        operation = itemInCartService.delete(itemInCart.getItemInCartId());
+                                                    } else {
+                                                        itemInCart.setCount(itemInCart.getCount() - 1);
+                                                        operation = itemInCartService.save(itemInCart);
+                                                    }
+                                                }
+                                                case DELETE ->
+                                                        operation = itemInCartService.delete(itemInCart.getItemInCartId());
+                                                default ->
+                                                        operation = Mono.error(new IllegalStateException("Неизвестное действие: " + action));
+                                            }
+                                            return operation.then(recalculateCartTotal(cart));
+                                        })
+                                        .switchIfEmpty(
+                                                action == Action.PLUS
+                                                        ? itemService.getItemById(itemId)
+                                                        .flatMap(item ->
+                                                                itemInCartService.save(
+                                                                        ItemInCart.builder()
+                                                                                .cartId(cart.getCartId())
+                                                                                .itemId(item.getItemId())
+                                                                                .price(item.getPrice())
+                                                                                .count(1)
+                                                                                .build()
+                                                                )
+                                                        )
+                                                        .then(recalculateCartTotal(cart))
+                                                        : Mono.empty()
                                         )
-                                        .then(recalculateCartTotal(cart))
-                                        : Mono.empty()
-                        )
-                )
-                .then(getItemDto(itemId));
+                                )
+                                .then(getItemDto(itemId)));
     }
 
     @Transactional
     @Override
     public Mono<OrderDto> createOrder() {
-        return cartService.getOrCreateActiveCart()
-                .flatMap(cart -> {
-                    Order order = Order.builder()
-                            .totalSum(cart.getTotal())
-                            .build();
-                    return paymentClientService.pay(cart.getTotal().doubleValue())
-                            .flatMap(response -> {
-                                if (!response.getSuccess()) {
-                                    return Mono.error(new IllegalStateException("Недостаточно средств"));
-                                }
-                                return orderService.save(order)
-                                        .flatMap(savedOrder ->
-                                                itemInCartService.findAllByCartId(cart.getCartId())
-                                                        .map(itemInCart -> new ItemInOrder(
-                                                                null,
-                                                                itemInCart.getItemId(),
-                                                                savedOrder.getOrderId(),
-                                                                itemInCart.getPrice(),
-                                                                itemInCart.getCount()
-                                                        ))
-                                                        .flatMap(itemInOrderService::save)
-                                                        .flatMap(savedItemInOrder ->
-                                                                itemService.getItemById(savedItemInOrder.getItemId())
-                                                                        .map(item -> {
-                                                                            ItemDto itemDto = new ItemDto(
-                                                                                    item.getItemId(),
-                                                                                    item.getTitle(),
-                                                                                    item.getDescription(),
-                                                                                    item.getImgPath(),
-                                                                                    item.getPrice(),
-                                                                                    savedItemInOrder.getCount()
-                                                                            );
-                                                                            return new ItemInOrderDto(
-                                                                                    savedItemInOrder.getItemInOrderId(),
-                                                                                    itemDto,
-                                                                                    savedItemInOrder.getPrice(),
-                                                                                    savedItemInOrder.getCount()
-                                                                            );
-                                                                        })
-                                                        )
-                                                        .collect(Collectors.toSet())
-                                                        .map(itemsInOrder -> new OrderDto(
-                                                                savedOrder.getOrderId(),
-                                                                itemsInOrder,
-                                                                savedOrder.getTotalSum()
-                                                        ))
-                                                        .flatMap(orderDto ->
-                                                                cartService.closeCart()
-                                                                        .thenReturn(orderDto)
-                                                        )
-                                        );
-                            });
-                });
+        return userService.getCurrentUser()
+                .flatMap(user ->
+                        cartService.getOrCreateActiveCart(user.getUserId())
+                                .flatMap(cart -> {
+                                    Order order = Order.builder()
+                                            .userId(user.getUserId())
+                                            .totalSum(cart.getTotal())
+                                            .build();
+                                    return paymentClientService.pay(user.getUserId(), cart.getTotal().doubleValue())
+                                            .flatMap(response -> {
+                                                if (!response.getSuccess()) {
+                                                    return Mono.error(new IllegalStateException("Недостаточно средств"));
+                                                }
+                                                return orderService.save(order)
+                                                        .flatMap(savedOrder ->
+                                                                itemInCartService.findAllByCartId(cart.getCartId())
+                                                                        .map(itemInCart -> new ItemInOrder(
+                                                                                null,
+                                                                                itemInCart.getItemId(),
+                                                                                savedOrder.getOrderId(),
+                                                                                itemInCart.getPrice(),
+                                                                                itemInCart.getCount()
+                                                                        ))
+                                                                        .flatMap(itemInOrderService::save)
+                                                                        .flatMap(savedItemInOrder ->
+                                                                                itemService.getItemById(savedItemInOrder.getItemId())
+                                                                                        .map(item -> {
+                                                                                            ItemDto itemDto = new ItemDto(
+                                                                                                    item.getItemId(),
+                                                                                                    item.getTitle(),
+                                                                                                    item.getDescription(),
+                                                                                                    item.getImgPath(),
+                                                                                                    item.getPrice(),
+                                                                                                    savedItemInOrder.getCount()
+                                                                                            );
+                                                                                            return new ItemInOrderDto(
+                                                                                                    savedItemInOrder.getItemInOrderId(),
+                                                                                                    itemDto,
+                                                                                                    savedItemInOrder.getPrice(),
+                                                                                                    savedItemInOrder.getCount()
+                                                                                            );
+                                                                                        })
+                                                                        )
+                                                                        .collect(Collectors.toSet())
+                                                                        .map(itemsInOrder -> new OrderDto(
+                                                                                savedOrder.getOrderId(),
+                                                                                itemsInOrder,
+                                                                                savedOrder.getTotalSum()
+                                                                        ))
+                                                                        .flatMap(orderDto ->
+                                                                                cartService.closeCart(user.getUserId())
+                                                                                        .thenReturn(orderDto)
+                                                                        )
+                                                        );
+                                            });
+                                }));
     }
 
     @Transactional(readOnly = true)
     @Override
     public Mono<OrderDto> getOrderById(Long orderId) {
-        return orderService.getOrderById(orderId)
-                .flatMap(order -> {
-                    return itemInOrderService.getItemInOrderByOrderId(order.getOrderId())
-                            .flatMap(itemInOrder -> {
-                                return itemService.getItemById(itemInOrder.getItemId())
-                                        .map(item -> {
-                                            ItemDto itemDto = new ItemDto(
-                                                    item.getItemId(),
-                                                    item.getTitle(),
-                                                    item.getDescription(),
-                                                    item.getImgPath(),
-                                                    item.getPrice(),
-                                                    itemInOrder.getCount()
-                                            );
-                                            return new ItemInOrderDto(
-                                                    itemInOrder.getItemInOrderId(),
-                                                    itemDto,
-                                                    itemInOrder.getPrice(),
-                                                    itemInOrder.getCount()
-                                            );
-                                        });
-                            }).collect(Collectors.toSet())
-                            .map(itemsInOrder -> new OrderDto(
-                                    order.getOrderId(),
-                                    itemsInOrder,
-                                    order.getTotalSum()
-                            ));
-                })
-                .switchIfEmpty(Mono.error(new OrderNotFoundException("Заказ с id = " + orderId + " не найден")));
+        return userService.getCurrentUser()
+                .flatMap(user ->
+                        orderService.getOrderByIdAndUserId(orderId, user.getUserId())
+                                .flatMap(order -> {
+                                    return itemInOrderService.getItemInOrderByOrderId(order.getOrderId())
+                                            .flatMap(itemInOrder -> {
+                                                return itemService.getItemById(itemInOrder.getItemId())
+                                                        .map(item -> {
+                                                            ItemDto itemDto = new ItemDto(
+                                                                    item.getItemId(),
+                                                                    item.getTitle(),
+                                                                    item.getDescription(),
+                                                                    item.getImgPath(),
+                                                                    item.getPrice(),
+                                                                    itemInOrder.getCount()
+                                                            );
+                                                            return new ItemInOrderDto(
+                                                                    itemInOrder.getItemInOrderId(),
+                                                                    itemDto,
+                                                                    itemInOrder.getPrice(),
+                                                                    itemInOrder.getCount()
+                                                            );
+                                                        });
+                                            }).collect(Collectors.toSet())
+                                            .map(itemsInOrder -> new OrderDto(
+                                                    order.getOrderId(),
+                                                    itemsInOrder,
+                                                    order.getTotalSum()
+                                            ));
+                                })
+                                .switchIfEmpty(Mono.error(new OrderNotFoundException("Заказ с id = " + orderId + " не найден"))));
     }
 
     @Override
     public Mono<CartDto> getActiveCartDto() {
-        return cartService.getOrCreateActiveCart()
+        return userService.getCurrentUser()
+                .flatMap(user ->
+                        cartService.getOrCreateActiveCart(user.getUserId()))
                 .flatMap(cart ->
-                                itemInCartService.findAllByCartId(cart.getCartId())
-                                        .flatMap(itemInCart -> itemService.getItemById(itemInCart.getItemId())
-                                                .map(item -> itemMapper.toItemDto(item, itemInCart.getCount())))
-                                        .collect(Collectors.toSet())
-                                        .map(items -> {
-//                                    CartDto cartDto = new CartDto();
-//                                    new CartDto(cart.getCartId(), items, cart.getTotal());
-                                            return CartDto.builder()
-                                                    .cartId(cart.getCartId())
-                                                    .items(items)
-                                                    .total(cart.getTotal())
-//                                            .canOrder()
-//                                            .paymentMessage()
-                                                    .build();
-                                        })
-                                        .flatMap(this::addPaymentInfo)
+                        itemInCartService.findAllByCartId(cart.getCartId())
+                                .flatMap(itemInCart -> itemService.getItemById(itemInCart.getItemId())
+                                        .map(item -> itemMapper.toItemDto(item, itemInCart.getCount())))
+                                .collect(Collectors.toSet())
+                                .map(items -> {
+                                    return CartDto.builder()
+                                            .cartId(cart.getCartId())
+                                            .items(items)
+                                            .total(cart.getTotal())
+                                            .build();
+                                })
+                                .flatMap(this::addPaymentInfo)
                 );
     }
 
     private Mono<CartDto> addPaymentInfo(CartDto cartDto) {
-        return paymentClientService.getBalance()
-                .map(balance -> {
-                    cartDto.setCanOrder(balance.getBalance() >= cartDto.getTotal().doubleValue());
-                    if (!cartDto.isCanOrder()) {
-                        cartDto.setPaymentMessage("Недостаточно средств");
-                    }
-                    return cartDto;
-                })
-                .onErrorResume(e -> {
-                    cartDto.setCanOrder(false);
-                    cartDto.setPaymentMessage("Сервис оплаты недоступен");
-                    return Mono.just(cartDto);
-                });
+        return userService.getCurrentUser()
+                .flatMap(user ->
+                        paymentClientService.getBalance(user.getUserId())
+                                .map(balance -> {
+                                    cartDto.setCanOrder(balance.getBalance() >= cartDto.getTotal().doubleValue());
+                                    if (!cartDto.isCanOrder()) {
+                                        cartDto.setPaymentMessage("Недостаточно средств");
+                                    }
+                                    return cartDto;
+                                })
+                                .onErrorResume(e -> {
+                                    cartDto.setCanOrder(false);
+                                    cartDto.setPaymentMessage("Сервис оплаты недоступен");
+                                    return Mono.just(cartDto);
+                                }));
     }
 
     @Transactional(readOnly = true)
     @Override
     public Flux<OrderDto> getOrders() {
-        return orderService.getOrders()
-                .flatMap(order -> {
-                    return itemInOrderService.getItemInOrderByOrderId(order.getOrderId())
-                            .flatMap(itemInOrder ->
-                                    itemService.getItemById(itemInOrder.getItemId())
-                                            .map(item -> new ItemInOrderDto(
-                                                    itemInOrder.getItemInOrderId(),
-                                                    itemMapper.toItemDto(item, itemInOrder.getCount()),
-                                                    itemInOrder.getPrice(),
-                                                    itemInOrder.getCount())))
-                            .collect(Collectors.toSet())
-                            .map(itemsInOrderDto -> new OrderDto(
-                                    order.getOrderId(),
-                                    itemsInOrderDto,
-                                    order.getTotalSum()
-                            ));
-                });
+        return userService.getCurrentUser()
+                .flatMapMany(user ->
+                        orderService.getOrdersByUserId(user.getUserId())
+                                .flatMap(order -> {
+                                    return itemInOrderService.getItemInOrderByOrderId(order.getOrderId())
+                                            .flatMap(itemInOrder ->
+                                                    itemService.getItemById(itemInOrder.getItemId())
+                                                            .map(item -> new ItemInOrderDto(
+                                                                    itemInOrder.getItemInOrderId(),
+                                                                    itemMapper.toItemDto(item, itemInOrder.getCount()),
+                                                                    itemInOrder.getPrice(),
+                                                                    itemInOrder.getCount())))
+                                            .collect(Collectors.toSet())
+                                            .map(itemsInOrderDto -> new OrderDto(
+                                                    order.getOrderId(),
+                                                    itemsInOrderDto,
+                                                    order.getTotalSum()
+                                            ));
+                                }));
     }
 
     private Mono<ItemDto> getItemDto(Long itemId) {
@@ -289,6 +322,34 @@ public class MarketServiceImpl implements MarketService {
         return Mono.zip(item, itemInCartCount)
                 .map(tuple -> itemMapper.toItemDto(tuple.getT1(), tuple.getT2()));
     }
+
+    @Override
+    public Mono<ItemDto> getItemDtoById(Long itemId) {
+        return userService.getCurrentUser()
+                .flatMap(user ->
+                        cartService.getOrCreateActiveCart(user.getUserId())
+                                .flatMap(cart ->
+                                        itemService.getItemById(itemId)
+                                                .flatMap(item ->
+                                                        itemInCartService
+                                                                .findByCartIdAndItemId(cart.getCartId(), itemId)
+                                                                .map(itemInCart ->
+                                                                        itemMapper.toItemDto(item, itemInCart.getCount()))
+                                                                .defaultIfEmpty(
+                                                                        itemMapper.toItemDto(item, 0))
+                                                )
+                                )
+                )
+                .switchIfEmpty(
+                        itemService.getItemById(itemId)
+                                .map(item -> itemMapper.toItemDto(item, 0))
+                );
+    }
+
+//    @Override
+//    public Mono<ItemDto> getAuthenticatedItemDtoById(Long itemId) {
+//        return getItemDto(itemId);
+//    }
 
     private Mono<Cart> recalculateCartTotal(Cart cart) {
         return itemInCartService.findAllByCartId(cart.getCartId())

@@ -12,6 +12,8 @@ public record CachedItem(
 
         String imgPath,
 
+        Integer count,
+
         BigDecimal price
 
 ) {

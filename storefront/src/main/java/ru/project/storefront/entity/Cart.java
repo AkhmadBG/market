@@ -23,6 +23,9 @@ public class Cart {
     @Column("cart_id")
     private Long cartId;
 
+    @Column("user_id")
+    private Long userId;
+
     @NotNull
     @PositiveOrZero
     @Column("total")

@@ -2,8 +2,20 @@ server:
   port: 8081
 
 spring:
+
   application:
     name: payment
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8082
+
+  liquibase:
+    enabled: true
+    change-log: classpath:db/changelog/db.changelog-master.yaml
+
 
 logging:
   level:

@@ -7,7 +7,7 @@ import ru.project.storefront.enums.CartStatus;
 
 public interface ItemInCartService {
 
-    Mono<ItemInCart> findByCartStatusAndItemId(CartStatus cartStatus, Long itemId);
+    Mono<ItemInCart> findByUserIdAndCartStatusAndItemId(Long userId, CartStatus cartStatus, Long itemId);
 
     Flux<ItemInCart> findAllByCartId(Long cartId);
 

@@ -22,6 +22,9 @@ public class Order {
     @Column("order_id")
     private Long orderId;
 
+    @Column("user_id")
+    private Long userId;
+
     @NotNull
     @PositiveOrZero
     @Column("total_sum")

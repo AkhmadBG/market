@@ -10,6 +10,8 @@ public record CachedItemShort(
 
         String description,
 
+        String imgPath,
+
         BigDecimal price
 
 ) {

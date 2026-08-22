@@ -16,14 +16,15 @@ public class PaymentClientServiceImpl implements PaymentClientService {
     private final PaymentApi paymentApi;
 
     @Override
-    public Mono<BalanceResponse> getBalance() {
-        return paymentApi.getBalance();
+    public Mono<BalanceResponse> getBalance(Long userId) {
+        return paymentApi.getBalance(userId);
     }
 
     @Override
-    public Mono<PaymentResponse> pay(Double amount) {
+    public Mono<PaymentResponse> pay(Long userId, Double amount) {
         PaymentRequest paymentRequest = new PaymentRequest();
         paymentRequest.setAmount(amount);
+        paymentRequest.setUserId(userId);
         return paymentApi.pay(paymentRequest);
     }
 

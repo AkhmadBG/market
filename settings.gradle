@@ -1,3 +1,4 @@
 rootProject.name = 'market'
 include 'storefront'
 include 'payment'
+include 'authorization-server'

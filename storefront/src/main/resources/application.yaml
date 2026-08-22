@@ -4,16 +4,37 @@ server:
 spring:
   application:
     name: storefront
+
   data:
     redis:
       host: localhost
       port: 6379
+
+  security:
+    oauth2:
+      client:
+        registration:
+          payment:
+            provider: authorization-server
+            client-id: storefront
+            client-secret: storefront-secret
+            authorization-grant-type: client_credentials
+            scope:
+              - payment
+        provider:
+          authorization-server:
+            token-uri: http://localhost:8082/oauth2/token
+
   liquibase:
     enabled: true
     change-log: classpath:db/changelog/db.changelog-master.yaml
 
 cache:
   ttl: 5m
+
+payment:
+  service:
+    url: http://localhost:8081
 
 logging:
   level:

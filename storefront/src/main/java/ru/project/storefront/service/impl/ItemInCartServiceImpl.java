@@ -20,7 +20,7 @@ public class ItemInCartServiceImpl implements ItemInCartService {
     private final DatabaseClient databaseClient;
 
     @Override
-    public Mono<ItemInCart> findByCartStatusAndItemId(CartStatus cartStatus, Long itemId) {
+    public Mono<ItemInCart> findByUserIdAndCartStatusAndItemId(Long userId, CartStatus cartStatus, Long itemId) {
         return databaseClient.sql("""
                         SELECT
                             ic.item_in_cart_id,
@@ -30,9 +30,12 @@ public class ItemInCartServiceImpl implements ItemInCartService {
                             ic.count
                         FROM items_in_carts ic
                         JOIN carts c ON c.cart_id = ic.cart_id
-                        WHERE c.cart_status = :cartStatus
-                          AND ic.item_id = :itemId
+                        JOIN users u ON u.user_id = c.user_id
+                        WHERE u.user_id = :userId
+                            AND c.cart_status = :cartStatus
+                            AND ic.item_id = :itemId
                         """)
+                .bind("userId", userId)
                 .bind("cartStatus", cartStatus.name())
                 .bind("itemId", itemId)
                 .map((row, metadata) ->

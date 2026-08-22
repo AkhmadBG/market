@@ -6,8 +6,8 @@ import ru.project.storefront.dto.PaymentResponse;
 
 public interface PaymentClientService {
 
-    Mono<BalanceResponse> getBalance();
+    Mono<BalanceResponse> getBalance(Long userId);
 
-    Mono<PaymentResponse> pay(Double amount);
+    Mono<PaymentResponse> pay(Long userId, Double amount);
 
 }
